@@ -1,43 +1,59 @@
 {
-  "updated": "2026-09-10",
-  "statusNote": "生产配置已回滚（磁盘完整恢复 12 bundles + 源码 + 依赖 + AGENTS.md），生产进程未重启，下次自然重启时加载回滚后配置；插件清理仅保留于 dev 侧（dsh-extensions-dev 提交 0d119eb）",
-  "guiExtensions": [
-    { "title": "dsh-genui", "desc": "回答内联 UI：fence/render_ui/validate_dsh_ui。在用（本会话高频）。默认配置。" },
-    { "title": "dsh-toolkit", "desc": "10 个确定性工具（time/encoding/json/calculator/csv/regex/markdown/diff/stat/schema）。从未被调用；保留待用。" },
-    { "title": "dsh-drop-to-path", "desc": "拖拽→路径 chips，客户端行为。无参数。" },
-    { "title": "dsh-context-compression-selector", "desc": "上下文压缩选择器（npm 0.1.0-beta.2）。compression profile=off。" },
-    { "title": "dsh-task-manager", "desc": "任务管理器（替换 dsh-sidebar-taskbar）。无 profile 参数。" },
-    { "title": "web-dsh-web-extension", "desc": "对话布局（设置→常规），无 profile 参数。自制插件，在用。" },
-    { "title": "dsh-agent-teams", "desc": "多智能体团队（生产中已回滚恢复；dev 侧源码已删）。" },
-    { "title": "memos-local-plugin", "desc": "记忆系统（生产中已回滚恢复；dev 侧源码已删）。" },
-    { "title": "dsh-lan-access", "desc": "局域网访问（生产中已回滚恢复）。" },
-    { "title": "dsh-remote-web-ui", "desc": "扫码远程控制（生产中已回滚恢复；dev 侧源码/dsh-web-ui 已删）。" }
+  "updated": "2026-09-13",
+  "scope": "本文件是人工维护的快照，记录 DSH 生产 profile 实际加载了什么、怎么交付、上游是谁。插件来源与更新纪律的正文见 docs/vendor-plugins.md，两者冲突时以 docs/vendor-plugins.md 与 ~/.dsh/profiles/web/package.json 为准。",
+  "productionProfile": {
+    "path": "~/.dsh/profiles/web",
+    "manager": "pnpm（nodeLinker: hoisted, autoInstallPeers: false）",
+    "dependencies": 10,
+    "bundles": 12,
+    "health": "全部解析成功；8 个 link: 目标均存在，无断链",
+    "note": "所有插件交付方式变更后都需要重启 dsh-web.service 才生效"
+  },
+  "bundles": [
+    { "name": "@deepseek-ai/dsh-base", "delivery": "内置", "note": "profile 基座" },
+    { "name": "@deepseek-ai/dsh-web-app", "delivery": "内置", "note": "Web 壳" },
+    { "name": "web-dsh-web-extension", "delivery": "link: dsh-extensions/plugins/", "note": "自制；对话布局（设置→常规）" },
+    { "name": "dsh-sidebar-taskbar", "delivery": "link: dsh-extensions/plugins/", "note": "自制；与 dsh-task-manager 并存" },
+    { "name": "dsh-task-manager", "delivery": "link: dsh-extensions/plugins/", "note": "自制；任务管理器" },
+    { "name": "dsh-context-compression-selector", "delivery": "npm 0.1.0", "note": "压缩选择器；context-compression.profile=off" },
+    { "name": "dsh-lan-access", "delivery": "npm ^0.1.1", "note": "局域网访问" },
+    { "name": "@changfenhuang/dsh-genui", "delivery": "link: _dsh_plugins_src/dsh-genui", "note": "上游 omdsh-dev/dsh-genui；回答内联 UI" },
+    { "name": "@deepseek-ai/dsh-toolkit", "delivery": "link: _dsh_plugins_src/dsh-toolkit", "note": "上游 omdsh-dev/dsh-toolkit；10 个确定性工具" },
+    { "name": "@dsh-external/dsh-drop-to-path", "delivery": "link: _dsh_plugins_src/dsh-drop-to-path", "note": "上游 loudMore/dsh-drop-to-path；拖拽→路径 chips" },
+    { "name": "@nanmicoder/dsh-agent-teams", "delivery": "link: _dsh_plugins_src/dsh-agent-teams", "note": "上游 NanmiCoder；npm 同名同版本 0.1.17，运行时载荷与本地逐字节一致（0 个运行依赖）" },
+    { "name": "@memtensor/memos-local-plugin", "delivery": "link: _dsh_plugins_src/MemOS/apps/memos-local-plugin", "note": "上游 MemTensor；npm 同名同版本 2.0.19，运行时载荷逐字节一致，但 8 个运行依赖（含原生模块 better-sqlite3）共 455M 装在源码目录内" }
   ],
-  "removedInDevOnly": [
-    "deepseek-vision / dsh-session-tabs（残缺源码，dev worktree 已 git rm）",
-    "dsh-continual-evolve（完整包但从未装载，dev worktree 已 git rm）",
-    "dsh-sidebar-taskbar（被 dsh-task-manager 替代，dev worktree 已 git rm）"
+  "devInstance": {
+    "unit": "dsh-web-dev.service（Restart=always, StartLimitIntervalSec=0）",
+    "port": 3081,
+    "dshHome": "dev/.dsh-home",
+    "launcher": "dev/.dsh-dev-launch.sh（已纳入 DSH 仓库 dev 分支）",
+    "profile": "独立精简集，仅 dsh-sidebar-taskbar + web-dsh-web-extension；不含 genui/toolkit/agent-teams/MemOS",
+    "note": "因 profile 不同，生产侧的插件交付方式变更无法在 dev 上验证"
+  },
+  "retired": [
+    "relink-plugin-deps.mjs（2026-09-13 删除；为 link: 插件补 node_modules 解析链的临时工具，硬编码路径 dsh-web-ui/… 已失效）",
+    "dsh-remote-web-ui（源码目录 dsh-web-ui 已删，未装载）",
+    "deepseek-vision / dsh-session-tabs（残缺源码，已 git rm）",
+    "dsh-continual-evolve（完整包但从未装载，已 git rm）"
   ],
   "mcp": [
-    { "name": "mcp-cbm", "desc": "codebase-memory 0.10.8 已装；长期服务：systemd --user codebase-memory.service（daemon 常驻+UI 9749+auto_index+auto_watch）；MyAI 全仓索引中；客户端行仍 stdio 拉起。" },
-    { "name": "mcp-ue", "desc": "Unreal MCP 127.0.0.1:8000/mcp，failOnStartupError=false。本机未监听（属 Windows/UE 侧）。" },
-    { "name": "mcp-headroom", "desc": "headroom 自带 MCP：stdio `headroom mcp serve`（v1.29.1），暴露 headroom_compress/retrieve/stats。2026-09-10 从死配置（streamable-http 8791）改为 stdio 直连。" },
-    { "name": "mcp-playwright", "desc": "Playwright 浏览器 MCP：stdio playwright-mcp --headless --browser chromium（npm -g v0.0.80）。" }
+    { "name": "mcp-cbm", "desc": "codebase-memory；stdio 拉起 codebase-memory-mcp，UI 9749" },
+    { "name": "mcp-ue", "desc": "Unreal MCP http://127.0.0.1:8000/mcp，failOnStartupError=false；属 Windows/UE 侧" },
+    { "name": "mcp-headroom", "desc": "headroom 自带 MCP，stdio `headroom mcp serve`（v1.29.1）" },
+    { "name": "mcp-playwright", "desc": "playwright-mcp --headless --browser chromium（全局 npm v0.0.80）" }
   ],
   "coreAdjusts": [
-    "并发工具 10（已生效）；shell 超时 30min（已生效）",
-    "无沙箱（sandbox/sandbox-policy/bash-pwsh-fs-sandbox/permission/ui-permission/approval 全关；bash-local+fs-local 接管）",
-    "agent-instructions 启用；session-query-sqlite；web-searchProvider=exa（web-search-exa）",
-    "root 规则：~/.dsh/AGENTS.md（调用语法 + memos 记忆规则，均已保留）",
-    "已关：session-log-download / tool-ralph / goal 全套 / fs-observation-policy / ui-goal / ui-plan / session-telemetry-otel / message-feedback / command-feedback",
-    "子 agent 路由：tool-subagent / tool-subagent-fork 于 cordis.patch.yml 固定为 deepseek-official / deepseek-v4.1-flash-expires-on-0910"
+    "并发工具 10；shell 超时 30min（1800000ms）",
+    "permission.defaultPreset=workspace-write；本会话运行时文件策略为 danger-full-access",
+    "agent-presets.default=omni；agent-default-model=deepseek-official/deepseek-flash（reasoningEffort=max）",
+    "llm-deepseek.baseURL=http://127.0.0.1:8787/v1（本机代理），apiKeyEnv=DEEPSEEK_API_KEY",
+    "context-compression.profile=off（自定义 v3 阈值仍在 settings.yaml 里）",
+    "root 规则：~/.dsh/AGENTS.md（修改位置纪律 + 调用语法 + memos 记忆规则）",
+    "locale.preference=zh"
   ],
-  "settings": {
-    "defaultModel": "siliconflow deepseek-ai/DeepSeek-V4-Flash max（settings.yaml 现为 al/deepseek-v4-flash-0731）",
-    "defaultPreset": "omni",
-    "maxParallelToolCalls": 10,
-    "shellTimeoutMs": 1800000,
-    "locale": "zh",
-    "pet": "鲸鱼娘，隐藏"
+  "workspace": {
+    "repo": "xgx1/MyAI-workspace（private）",
+    "note": "顶层工作区仓库只版本化工作区级资产（AGENTS.md/CONTEXT.md/docs/本文件）；master dev dsh-extensions 等以 /xxx/ 形式排除，各由自己的仓库负责"
   }
 }
