@@ -14,8 +14,8 @@
 | `@changfenhuang/dsh-genui` | `_dsh_plugins_src/dsh-genui` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-genui` |
 | `@deepseek-ai/dsh-toolkit` | `_dsh_plugins_src/dsh-toolkit` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-toolkit` |
 | `@dsh-external/dsh-drop-to-path` | `_dsh_plugins_src/dsh-drop-to-path` | ✅ 自带 `.git` | `github.com/loudMore/dsh-drop-to-path` |
-| `@memtensor/memos-local-plugin` | `_dsh_plugins_src/MemOS/apps/memos-local-plugin` | ✅ 2026-09-12 接入 | `github.com/MemTensor/MemOS`（分支 `main`）——见下方更新注意 |
-| `@nanmicoder/dsh-agent-teams` | `_dsh_plugins_src/dsh-agent-teams` | ✅ 2026-09-12 接入 | `github.com/NanmiCoder/dsh-agent-teams`（分支 `main`） |
+| `@memtensor/memos-local-plugin` | npm registry（`2.0.19`） | — | `github.com/MemTensor/MemOS`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
+| `@nanmicoder/dsh-agent-teams` | npm registry（`0.1.17`） | — | `github.com/NanmiCoder/dsh-agent-teams`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
 | `dsh-context-compression-selector` | npm registry（`0.1.0`） | — | `github.com/WilliamShi666/dsh-context-compression-selector` |
 | `dsh-lan-access` | npm registry（`^0.1.1`） | — | 第三方 npm 包 |
 
@@ -33,19 +33,31 @@ git branch -m main               # 本地分支名与上游对齐
 git branch --set-upstream-to=origin/main
 ```
 
-### MemOS（`_dsh_plugins_src/MemOS`）
+### 2026-09-13：这两个插件改为 npm 交付，源码目录已删除
 
-- 上游：`github.com/MemTensor/MemOS`（Apache-2.0），默认分支 `main`，接入时 HEAD `de806942`（2026-09-08）。
-- 生产实际加载的是子目录 `apps/memos-local-plugin`。
-- **关键事实：本地副本比上游 main 更新**——本地 `@memtensor/memos-local-plugin` 是 `2.0.19`，上游 `main` 里是 `2.0.16-beta.1`。
-- 因此 **`git pull` 会把生产插件降级**。正确用法是：用 `git fetch` 观察上游何时超过 `2.0.19`（或发布新 tag）再更新；本地新增/修改只集中在少数文件，`git status` 可随时核对。
-- 目录里有一个本地遗留文件 `apps/memos-local-plugin/pnpm-workspace.yaml.bak-issue`（未跟踪），确认无用后可删。
+`_dsh_plugins_src/MemOS` 与 `_dsh_plugins_src/dsh-agent-teams` **已整体删除**（含 `.git`）。删除前先做了「无损」验证：
 
-### dsh-agent-teams（`_dsh_plugins_src/dsh-agent-teams`）
+- 用 `npm pack` 取回同版本 tarball，与本地目录逐文件比对：**两边内容不同的文件 = 0**
+  （MemOS 92 处差异、agent-teams 7 处，全部是「只在本地存在」的开发文件——`src/`、tsconfig、构建配置，npm 包只发运行时载荷）。
+- 因此 npm 包与本地运行时载荷**逐字节一致**，切换不改变行为。
 
-- 上游：`github.com/NanmiCoder/dsh-agent-teams`（MIT），默认分支 `main`，接入时 HEAD `18fba62`（2026-09-11）。
-- 本地版本 `0.1.17` 与上游 `main` 相同；本地多出 `lib/`（构建产物）与 `node_modules/`，缺少上游的开发用文件（`.github/`、`.agents/`、`AGENTS.md` 等）——即本地更像"发布包 + 本地构建"，上游是源码仓库形态。
-- 若要从源码更新：`git pull && pnpm install && pnpm build`，**改完必须重建 `lib/`**，因为生产加载的是 `lib/`。
+profile 侧改动（`~/.dsh/profiles/web/`）：
+
+1. `package.json`：两条 `link:` 改成版本号 `2.0.19` / `0.1.17`。
+2. `pnpm-workspace.yaml` 的 `allowBuilds` 增补：`@memtensor/memos-local-plugin`、`better-sqlite3`、
+   `esbuild`、`onnxruntime-node`、`protobufjs` 放行；**`sharp: false` 显式不放行**——
+   它靠预编译的 `@img/sharp-linux-x64` 工作（实测可加载），放行反而会走 node-gyp 源码编译并失败
+   （缺 `node-addon-api`），让整个 `pnpm install` 非零退出。
+3. `pnpm install` 后校验：10 个依赖全部解析、`dsh --profile web --dump-config` 组合出的插件树里两个插件都在。
+
+代价与回滚：
+
+- **磁盘是净增的**：`~/.dsh/profiles/web/node_modules` 从 15M 涨到 1.2G（其中 `onnxruntime-node` 513M、
+  MemOS 依赖树 461M），而工作区只回收 600M。`onnxruntime-node` 的 302M CUDA provider 与 34M
+  `libonnxruntime.so.1` 由它的 postinstall 拉取，**不能关**（关了 CPU 推理会缺库）。
+- 回滚：`~/.dsh/profiles/web/` 下留有 `package.json.bak-20260913-070211`、`pnpm-lock.yaml.bak-...`、
+  `pnpm-workspace.yaml.bak-...`；恢复后重跑 `pnpm install` 即可回到 link: 形态
+  （但源码目录已删，需先重新 clone 对应上游仓库）。
 
 ## 三、更新前的通用纪律
 

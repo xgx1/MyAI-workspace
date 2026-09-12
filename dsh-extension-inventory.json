@@ -6,7 +6,7 @@
     "manager": "pnpm（nodeLinker: hoisted, autoInstallPeers: false）",
     "dependencies": 10,
     "bundles": 12,
-    "health": "全部解析成功；8 个 link: 目标均存在，无断链",
+    "health": "全部解析成功；6 个 link: 目标均存在、4 个走 npm registry，无断链；pnpm install 退出码 0；dsh --profile web --dump-config 可组合出完整插件树",
     "note": "所有插件交付方式变更后都需要重启 dsh-web.service 才生效"
   },
   "bundles": [
@@ -20,8 +20,8 @@
     { "name": "@changfenhuang/dsh-genui", "delivery": "link: _dsh_plugins_src/dsh-genui", "note": "上游 omdsh-dev/dsh-genui；回答内联 UI" },
     { "name": "@deepseek-ai/dsh-toolkit", "delivery": "link: _dsh_plugins_src/dsh-toolkit", "note": "上游 omdsh-dev/dsh-toolkit；10 个确定性工具" },
     { "name": "@dsh-external/dsh-drop-to-path", "delivery": "link: _dsh_plugins_src/dsh-drop-to-path", "note": "上游 loudMore/dsh-drop-to-path；拖拽→路径 chips" },
-    { "name": "@nanmicoder/dsh-agent-teams", "delivery": "link: _dsh_plugins_src/dsh-agent-teams", "note": "上游 NanmiCoder；npm 同名同版本 0.1.17，运行时载荷与本地逐字节一致（0 个运行依赖）" },
-    { "name": "@memtensor/memos-local-plugin", "delivery": "link: _dsh_plugins_src/MemOS/apps/memos-local-plugin", "note": "上游 MemTensor；npm 同名同版本 2.0.19，运行时载荷逐字节一致，但 8 个运行依赖（含原生模块 better-sqlite3）共 455M 装在源码目录内" }
+    { "name": "@nanmicoder/dsh-agent-teams", "delivery": "npm 0.1.17", "note": "上游 NanmiCoder；2026-09-13 由 link: 源码目录改为 npm 交付，运行时载荷逐字节一致" },
+    { "name": "@memtensor/memos-local-plugin", "delivery": "npm 2.0.19", "note": "上游 MemTensor；2026-09-13 由 link: 源码目录改为 npm 交付，载荷逐字节一致；依赖树 461M 现装在 profile 内" }
   ],
   "devInstance": {
     "unit": "dsh-web-dev.service（Restart=always, StartLimitIntervalSec=0）",
@@ -32,6 +32,8 @@
     "note": "因 profile 不同，生产侧的插件交付方式变更无法在 dev 上验证"
   },
   "retired": [
+    "_dsh_plugins_src/MemOS（2026-09-13 整树删除；插件改 npm 2.0.19 交付）",
+    "_dsh_plugins_src/dsh-agent-teams（2026-09-13 整树删除；插件改 npm 0.1.17 交付）",
     "relink-plugin-deps.mjs（2026-09-13 删除；为 link: 插件补 node_modules 解析链的临时工具，硬编码路径 dsh-web-ui/… 已失效）",
     "dsh-remote-web-ui（源码目录 dsh-web-ui 已删，未装载）",
     "deepseek-vision / dsh-session-tabs（残缺源码，已 git rm）",
