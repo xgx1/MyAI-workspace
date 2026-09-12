@@ -1,0 +1,43 @@
+{
+  "updated": "2026-09-10",
+  "statusNote": "生产配置已回滚（磁盘完整恢复 12 bundles + 源码 + 依赖 + AGENTS.md），生产进程未重启，下次自然重启时加载回滚后配置；插件清理仅保留于 dev 侧（dsh-extensions-dev 提交 0d119eb）",
+  "guiExtensions": [
+    { "title": "dsh-genui", "desc": "回答内联 UI：fence/render_ui/validate_dsh_ui。在用（本会话高频）。默认配置。" },
+    { "title": "dsh-toolkit", "desc": "10 个确定性工具（time/encoding/json/calculator/csv/regex/markdown/diff/stat/schema）。从未被调用；保留待用。" },
+    { "title": "dsh-drop-to-path", "desc": "拖拽→路径 chips，客户端行为。无参数。" },
+    { "title": "dsh-context-compression-selector", "desc": "上下文压缩选择器（npm 0.1.0-beta.2）。compression profile=off。" },
+    { "title": "dsh-task-manager", "desc": "任务管理器（替换 dsh-sidebar-taskbar）。无 profile 参数。" },
+    { "title": "web-dsh-web-extension", "desc": "对话布局（设置→常规），无 profile 参数。自制插件，在用。" },
+    { "title": "dsh-agent-teams", "desc": "多智能体团队（生产中已回滚恢复；dev 侧源码已删）。" },
+    { "title": "memos-local-plugin", "desc": "记忆系统（生产中已回滚恢复；dev 侧源码已删）。" },
+    { "title": "dsh-lan-access", "desc": "局域网访问（生产中已回滚恢复）。" },
+    { "title": "dsh-remote-web-ui", "desc": "扫码远程控制（生产中已回滚恢复；dev 侧源码/dsh-web-ui 已删）。" }
+  ],
+  "removedInDevOnly": [
+    "deepseek-vision / dsh-session-tabs（残缺源码，dev worktree 已 git rm）",
+    "dsh-continual-evolve（完整包但从未装载，dev worktree 已 git rm）",
+    "dsh-sidebar-taskbar（被 dsh-task-manager 替代，dev worktree 已 git rm）"
+  ],
+  "mcp": [
+    { "name": "mcp-cbm", "desc": "codebase-memory 0.10.8 已装；长期服务：systemd --user codebase-memory.service（daemon 常驻+UI 9749+auto_index+auto_watch）；MyAI 全仓索引中；客户端行仍 stdio 拉起。" },
+    { "name": "mcp-ue", "desc": "Unreal MCP 127.0.0.1:8000/mcp，failOnStartupError=false。本机未监听（属 Windows/UE 侧）。" },
+    { "name": "mcp-headroom", "desc": "headroom 自带 MCP：stdio `headroom mcp serve`（v1.29.1），暴露 headroom_compress/retrieve/stats。2026-09-10 从死配置（streamable-http 8791）改为 stdio 直连。" },
+    { "name": "mcp-playwright", "desc": "Playwright 浏览器 MCP：stdio playwright-mcp --headless --browser chromium（npm -g v0.0.80）。" }
+  ],
+  "coreAdjusts": [
+    "并发工具 10（已生效）；shell 超时 30min（已生效）",
+    "无沙箱（sandbox/sandbox-policy/bash-pwsh-fs-sandbox/permission/ui-permission/approval 全关；bash-local+fs-local 接管）",
+    "agent-instructions 启用；session-query-sqlite；web-searchProvider=exa（web-search-exa）",
+    "root 规则：~/.dsh/AGENTS.md（调用语法 + memos 记忆规则，均已保留）",
+    "已关：session-log-download / tool-ralph / goal 全套 / fs-observation-policy / ui-goal / ui-plan / session-telemetry-otel / message-feedback / command-feedback",
+    "子 agent 路由：tool-subagent / tool-subagent-fork 于 cordis.patch.yml 固定为 deepseek-official / deepseek-v4.1-flash-expires-on-0910"
+  ],
+  "settings": {
+    "defaultModel": "siliconflow deepseek-ai/DeepSeek-V4-Flash max（settings.yaml 现为 al/deepseek-v4-flash-0731）",
+    "defaultPreset": "omni",
+    "maxParallelToolCalls": 10,
+    "shellTimeoutMs": 1800000,
+    "locale": "zh",
+    "pet": "鲸鱼娘，隐藏"
+  }
+}
