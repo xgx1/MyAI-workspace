@@ -24,12 +24,9 @@
     { "name": "@memtensor/memos-local-plugin", "delivery": "npm 2.0.19", "note": "上游 MemTensor；2026-09-13 由 link: 源码目录改为 npm 交付，载荷逐字节一致；依赖树 461M 现装在 profile 内" }
   ],
   "devInstance": {
-    "unit": "dsh-web-dev.service（Restart=always, StartLimitIntervalSec=0）",
-    "port": 3081,
-    "dshHome": "dev/.dsh-home",
-    "launcher": "dev/.dsh-dev-launch.sh（已纳入 DSH 仓库 dev 分支）",
-    "profile": "独立精简集，仅 dsh-sidebar-taskbar + web-dsh-web-extension；不含 genui/toolkit/agent-teams/MemOS",
-    "note": "因 profile 不同，生产侧的插件交付方式变更无法在 dev 上验证"
+    "status": "已下线（2026-09-13）",
+    "note": "原 3081 dev 实例随 dev worktree 一并拆除：dev 分支（本地与 fork 远端）删除、dev/ worktree 移除（释放 2.5G）、dsh-web-dev.service 停用并删除单元文件。DSH 仓库现为单检出 master/，生产实例（3080）就跑在它上面。其 profile 原本是独立精简集，因此本来就无法验证生产侧的插件交付变更。",
+    "removedRefs": "dsh-web-dev.service · dev/.dsh-dev-launch.sh · dev/.dsh-home · port 3081"
   },
   "retired": [
     "_dsh_plugins_src/MemOS（2026-09-13 整树删除；插件改 npm 2.0.19 交付）",
@@ -56,6 +53,6 @@
   ],
   "workspace": {
     "repo": "xgx1/MyAI-workspace（private）",
-    "note": "顶层工作区仓库只版本化工作区级资产（AGENTS.md/CONTEXT.md/docs/本文件）；master dev dsh-extensions 等以 /xxx/ 形式排除，各由自己的仓库负责"
+    "note": "顶层工作区仓库只版本化工作区级资产（AGENTS.md/CONTEXT.md/docs/本文件）；master、dsh-extensions 等以 /xxx/ 形式排除，各由自己的仓库负责"
   }
 }
