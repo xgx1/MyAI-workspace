@@ -10,3 +10,6 @@
 node_modules/
 .playwright-mcp/
 *.tar.gz
+
+# zvec-grep 的工作区索引（本机产物，可再生；删了用 `zg index --rebuild` 重建）
+.zvec-grep/
