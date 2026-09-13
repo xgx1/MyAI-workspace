@@ -14,10 +14,11 @@
 | `@changfenhuang/dsh-genui` | `dsh-extensions/vendor/dsh-genui` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-genui` |
 | `@deepseek-ai/dsh-toolkit` | `dsh-extensions/vendor/dsh-toolkit` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-toolkit` |
 | `@dsh-external/dsh-drop-to-path` | `dsh-extensions/vendor/dsh-drop-to-path` | ✅ 自带 `.git` | `github.com/loudMore/dsh-drop-to-path` |
-| `@memtensor/memos-local-plugin` | npm registry（`2.0.19`） | — | `github.com/MemTensor/MemOS`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
 | `@nanmicoder/dsh-agent-teams` | npm registry（`0.1.17`） | — | `github.com/NanmiCoder/dsh-agent-teams`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
 | `dsh-context-compression-selector` | npm registry（`0.1.0`） | — | `github.com/WilliamShi666/dsh-context-compression-selector` |
-| `dsh-lan-access` | npm registry（`^0.1.1`） | — | 第三方 npm 包 |
+| `dsh-lan-access` | npm registry（`^0.1.1`） | — | 第三方 npm 包；实测 `dependencies: {}`，纯 JS 无构建脚本 |
+
+> `@memtensor/memos-local-plugin` 已于 **2026-09-13 彻底移除**，不再是生产插件——见本节末「MemOS 彻底移除」。
 
 ### 目录布局：自研 vs 第三方（2026-09-13 归并）
 
@@ -79,6 +80,24 @@ profile 侧改动（`~/.dsh/profiles/web/`）：
   2. 把 `package.json` 里两条依赖改回 `link:`（原路径见本文件第一节表格的「源码路径」列）；
   3. `pnpm install` 重建依赖树，并把 `pnpm-workspace.yaml` 里本文件第 46–50 行提到的 `allowBuilds` 增补去掉。
   换言之：**本文件 + 上游仓库就是完整的回滚材料**，机器上不再保留快照副本。
+
+### 2026-09-13：MemOS 彻底移除（最终态）
+
+用户判定不再需要记忆插件，`@memtensor/memos-local-plugin` 被整体移除。改动面：
+
+| 位置 | 处理 |
+| --- | --- |
+| `~/.dsh/profiles/web/package.json` | 删除依赖与 bundles 两条目（依赖 10→9、bundles 12→11） |
+| `~/.dsh/profiles/web/cordis.patch.yml` | 删除 `- id: memos-local-memory` 覆盖块（含 2026-08-24 的召回上限调整） |
+| `~/.dsh/profiles/web/node_modules` | 依赖树随 `pnpm install` 剪除；另清掉 `@huggingface/*`、`js-yaml`、`argparse` 等残留与该批空目录 |
+| `~/.dsh/profiles/web/pnpm-workspace.yaml` | `allowBuilds` 清空为 `{}`——原有 8 条（含更早遗留的 `cloudflared`/`ssh2`/`cpu-features`）已全部不在 lockfile 与 node_modules 中 |
+| `~/.dsh/memos-plugin/` | 数据目录删除（`memos.db` 13.6M，含 102 条 trace / 102 个 episode） |
+
+**效果**：`memos_*` 工具与每轮注入的 `<memos_context>` 自动召回一并消失；profile 从 **905M 降到 18M**（本文档第 74 行「涨到 1.2G」的记录已作废）。
+
+**一处需要留意**：`pnpm install` 在依赖剪除期间超时被杀过一次，锁文件已按缩减后的树重写；随后复跑 `pnpm install` 返回「Already up to date」并补装 3 个包，`dsh --profile web --dump-config` 仍组合出 54 个插件条目、0 报错、6 条 `link:` 全解析。若日后要复核依赖图，以 `pnpm install` + `dump-config` 的组合为准，不要只看目录大小。
+
+**回滚**：数据目录曾备份在 `/tmp/memos-plugin-backup-20260913-131232.tar.zst`（4.2M，/tmp 重启即失）；插件本体可从 npm 重新安装（`pnpm add @memtensor/memos-local-plugin@2.0.19`）并恢复 cordis patch 块。
 
 ## 三、更新前的通用纪律
 

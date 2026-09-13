@@ -4,9 +4,9 @@
   "productionProfile": {
     "path": "~/.dsh/profiles/web",
     "manager": "pnpm（nodeLinker: hoisted, autoInstallPeers: false）",
-    "dependencies": 10,
-    "bundles": 12,
-    "health": "全部解析成功；6 个 link: 目标均存在、4 个走 npm registry，无断链；pnpm install 退出码 0；dsh --profile web --dump-config 可组合出完整插件树",
+    "dependencies": 9,
+    "bundles": 11,
+    "health": "全部解析成功；6 个 link: 目标均存在、3 个走 npm registry，无断链；pnpm install 退出码 0；dsh --profile web --dump-config 可组合出完整插件树",
     "note": "所有插件交付方式变更后都需要重启 dsh-web.service 才生效"
   },
   "bundles": [
@@ -20,8 +20,7 @@
     { "name": "@changfenhuang/dsh-genui", "delivery": "link: dsh-extensions/vendor/dsh-genui", "note": "上游 omdsh-dev/dsh-genui；回答内联 UI（2026-09-13 由 _dsh_plugins_src/ 迁入 vendor/）" },
     { "name": "@deepseek-ai/dsh-toolkit", "delivery": "link: dsh-extensions/vendor/dsh-toolkit", "note": "上游 omdsh-dev/dsh-toolkit；10 个确定性工具（同日迁入）" },
     { "name": "@dsh-external/dsh-drop-to-path", "delivery": "link: dsh-extensions/vendor/dsh-drop-to-path", "note": "上游 loudMore/dsh-drop-to-path；拖拽→路径 chips（同日迁入）" },
-    { "name": "@nanmicoder/dsh-agent-teams", "delivery": "npm 0.1.17", "note": "上游 NanmiCoder；2026-09-13 由 link: 源码目录改为 npm 交付，运行时载荷逐字节一致" },
-    { "name": "@memtensor/memos-local-plugin", "delivery": "npm 2.0.19", "note": "上游 MemTensor；2026-09-13 由 link: 源码目录改为 npm 交付，载荷逐字节一致；依赖树 461M 现装在 profile 内" }
+    { "name": "@nanmicoder/dsh-agent-teams", "delivery": "npm 0.1.17", "note": "上游 NanmiCoder；2026-09-13 由 link: 源码目录改为 npm 交付，运行时载荷逐字节一致" }
   ],
   "devInstance": {
     "status": "已下线（2026-09-13）",
@@ -29,6 +28,7 @@
     "removedRefs": "dsh-web-dev.service · dev/.dsh-dev-launch.sh · dev/.dsh-home · port 3081"
   },
   "retired": [
+    "@memtensor/memos-local-plugin（2026-09-13 用户要求彻底移除：profile 依赖/bundle、cordis patch config、node_modules 依赖树 461M+onnxruntime 211M、数据目录 ~/.dsh/memos-plugin 全部删除；memos_* 工具与每轮 <memos_context> 自动召回随之消失）",
     "_dsh_plugins_src/MemOS（2026-09-13 整树删除；插件改 npm 2.0.19 交付）",
     "_dsh_plugins_src/dsh-agent-teams（2026-09-13 整树删除；插件改 npm 0.1.17 交付）",
     "_dsh_plugins_src/ 与 rider-skills/ 两个工作区一级目录（2026-09-13 并入 dsh-extensions/vendor/；4 个第三方上游克隆保留各自 .git 与远端）",
@@ -49,7 +49,7 @@
     "agent-presets.default=omni；agent-default-model=deepseek-official/deepseek-flash（reasoningEffort=max）",
     "llm-deepseek.baseURL=http://127.0.0.1:8787/v1（本机代理），apiKeyEnv=DEEPSEEK_API_KEY",
     "context-compression.profile=off（自定义 v3 阈值仍在 settings.yaml 里）",
-    "root 规则：~/.dsh/AGENTS.md（修改位置纪律 + 调用语法 + memos 记忆规则）",
+    "root 规则：~/.dsh/AGENTS.md（修改位置纪律 + 调用语法；2026-09-13 起已无 memos 记忆规则——插件已移除）",
     "locale.preference=zh"
   ],
   "workspace": {
