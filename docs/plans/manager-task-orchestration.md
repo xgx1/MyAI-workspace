@@ -102,7 +102,7 @@ toolFilter 白/黑名单语义以「## M0 结论」引用源码为准；表达�
 
 ## 经验教训（复盘，2026-09-10）
 
-> **2026-09-13 追注**：这份复盘的背景是当时的「主检出 + dev worktree」双检出工作流。该工作流已于 2026-09-13 下线——dev 分支（本地与 fork 远端）、`dev/` worktree、3081 dev 实例与 `dsh-web-dev.service` 一并移除，DSH 仓库现为单检出 `master/`，生产实例就跑在它上面。因此下面第 1、3、4 条关于「开发位置」的纪律**不再适用**，仅作历史记录保留（它们记录的教训本身——「位置必须显式确认、描述与实况不符即停」——仍然成立，只是对象从「哪个 worktree」变成「改 master 即改生产」）。第 2、5、6 条与位置无关，继续有效。
+> **2026-09-13 追注**：这份复盘的背景是当时的「主检出 + dev worktree」双检出工作流。该工作流已于 2026-09-13 下线——dev 分支（本地与 fork 远端）、`dev/` worktree、3081 dev 实例与 `dsh-web-dev.service` 一并移除，DSH 仓库现为单检出 `deepseek-harness/`（同日由 `master/` 改名，分支仍叫 `master`），生产实例就跑在它上面。因此下面第 1、3、4 条关于「开发位置」的纪律**不再适用**，仅作历史记录保留（它们记录的教训本身——「位置必须显式确认、描述与实况不符即停」——仍然成立，只是对象从「哪个 worktree」变成「改 `deepseek-harness/` 即改生产」）。第 2、5、6 条与位置无关，继续有效。
 
 1. **开发位置是门禁级需求**：多仓库 + worktree 工作流的工作区，功能开发必须在 dev worktree/分支进行；「代码落在哪」应进 grill-with-docs 拷问清单与任务契约（提交位置/分支策略字段）。
 2. **描述与观察不符即停**：用户话语中的环境信号（如「修改都在 dev worktree」）与工作树实况冲突时，停下对齐，不得沿用假设。
@@ -133,7 +133,7 @@ ADR-0004 第二后果被违反：`src/index.ts` 仍保留 M2 的 bundle 侧 7 �
 
 ### 留给用户
 
-- `dev/task-manager-orchestration` 合并回 `main` 的时机（注意 main 回退把 3 个本地提交挪到了 dev 分支）。
+- ~~`dev/task-manager-orchestration` 合并回 `main` 的时机~~ —— **已作废（2026-09-13）**：该分支与 `dev/` worktree 已随双检出下线一并移除，此项无需再执行。相关代码现位于工作区 `dsh-extensions/plugins/dsh-task-manager`（分支 `main`）。
 - GUI 人工复验：新建/详情/类别筛选/需终审勾选/管理模式真会话派发演示（末项已具备全部条件；本轮已用 GUI 选预设 + 单轮消息验证工具面）。
 - AgentTeams 团队 `manager-task-orchestration` 仍绑定**原会话** `session-c7fd5194`，本会话无权 `agent_teams_delete`；要删需回原会话执行或手工清理 `.agent-teams/manager-task-orchestration/`。
 - `dsh-continual-evolve` 6 个既有失败与本 feature 无因果；其基线日志随 `.scratch/manager-task-orchestration/` 清理一并删除，可用 `pnpm test` 重新生成。
