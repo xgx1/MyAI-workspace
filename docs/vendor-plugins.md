@@ -38,6 +38,36 @@ dsh-extensions/              ← 自研仓库（git 远端 xgx1/dsh-extensions�
 gitlink（子模块引用）却不含内容。搬迁同步改了：生产 profile 的 3 条 `link:` 与
 `node_modules` 符号链接、`update-app/applist.toml`、本文件、`dsh-extension-inventory.json`。
 
+### 2026-09-13：主检出改名后的 vendor 内链重指（一次真实故障）
+
+同日 DSH 主检出目录由 `master/` 改名为 `deepseek-harness/`（分支仍是 `master`）。上面那次搬迁只改了
+生产 profile 的 `link:` 与 `node_modules` 顶层链接，**漏掉了 `vendor/dsh-toolkit` 内部的链接**：
+它的根与 10 个子包的 `node_modules` 里存有指向旧目录的绝对符号链接
+（`@deepseek-ai/dsh-tools` → `packages/core/tools`、`cordis` → `vendor/cordis`、
+`@types/node` → 根 `node_modules/.pnpm/@types+node@26.1.2/...`），改名后 23 条全部悬空。
+
+症状：`dsh-web.service` 每 3 秒崩溃重启一次，journal 报
+`plugin tree failed to load: failed to apply loader entry tool-kit (@deepseek-ai/dsh-toolkit): Cannot find package '@deepseek-ai/dsh-tools'`。
+
+修复（幂等，可反复执行；已同时固化为 `applist.toml` 的 fixes.rule）：
+
+```sh
+find /home/sx/projects/MyAI/dsh-extensions -xtype l -print0 |
+while IFS= read -r -d "" l; do
+  t=$(readlink "$l") || continue
+  case "$t" in
+    /home/sx/projects/MyAI/*/*)
+      rest=${t#/home/sx/projects/MyAI/}; rest=${rest#*/}
+      [ -e "/home/sx/projects/MyAI/deepseek-harness/$rest" ] \
+        && ln -sfn "/home/sx/projects/MyAI/deepseek-harness/$rest" "$l" && echo "relinked: $l";;
+  esac
+done
+```
+
+**纪律**：任何改名/移动 `deepseek-harness` 的动作，做完先跑上面的重指，确认
+`find /home/sx/projects/MyAI/dsh-extensions -xtype l` 输出为空，再重启 `dsh-web`；
+否则生产直接进崩溃循环。
+
 ## 二、第三方插件的接入方式与现状
 
 两个目录原本是"解压出来的源码"（没有 `.git`）。2026-09-12 用**不覆盖工作区**的方式接上了上游：
