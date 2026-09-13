@@ -113,6 +113,11 @@ toolFilter 白/黑名单语义以「## M0 结论」引用源码为准；表达�
 
 ## 收官记录（2026-09-10 续作会话，session-c56045b0）
 
+> **2026-09-13 追注**：以下路径与分支名是 **2026-09-10 当时的实况**，请勿照抄执行——`dev/task-manager-orchestration`
+> 分支、`dev/` worktree 与 `dsh-extensions-dev/` 检出均已下线。该插件现在的代码位置是
+> `dsh-extensions/plugins/dsh-task-manager`（分支 `main`），部署链为
+> `~/.dsh/profiles/web/node_modules/dsh-task-manager` → 上述路径。预设那一条仍然有效。
+
 ### 交付状态
 
 - 代码：`dev/task-manager-orchestration` 共 10 提交，末提交 `c2bcd47`（ADR-0004 修复）；worktree 干净。
