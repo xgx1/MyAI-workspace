@@ -1,6 +1,5 @@
 # 嵌套的独立仓库：它们各自有自己的 .git 与远端，这里只做工作区级资产的版本控制
 /master/
-/dev/
 /dsh-extensions/
 /dsh-context-compression-selector/
 /rider-skills/
