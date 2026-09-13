@@ -3,9 +3,9 @@
 - 开发位置：DSH 仓库现在是**单检出** `deepseek-harness/`（分支仍是 `master`）——目录于 2026-09-13 由 `master/` 改名而来。原 `dev/` worktree 同日下线（`dev` 分支、worktree、3081 dev 实例、`dsh-web-dev.service` 一并移除）。
 - 生产实例：端口 `3080`、`DSH_HOME=~/.dsh`、由 `dsh-web.service` 托管，**就跑在这份 `deepseek-harness/` 检出上**——改它即改生产，重启生产会中断当前对话，重启前先确认。
 - `dsh-extensions/` 是单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 就是生产 `link:` 的目标。
-- **`vendor/` 与 `skills/` 都是 git submodule**（各 3 个与 16 个，共 19 个）：
+- **`vendor/` 与 `skills/` 都是 git submodule**（各 3 个与 14 个，共 17 个）：
   - `vendor/` = 第三方上游克隆（dsh-genui / dsh-toolkit / dsh-drop-to-path，均为生产 `link:` 目标），远端指各自上游。
-  - `skills/` = **技能分组仓**，一个上游仓库一组，`skills/<上游仓库名>/<技能>/`；有上游的是 `xgx1` 下的公开 fork，无上游的是自建仓。详见 `docs/adr/0006`。
+  - `skills/` = **技能分组仓**，一个上游仓库一组，`skills/<上游仓库名>/`；有上游的是 `xgx1` 下的公开 fork，无上游的是自建仓。**组内目录与上游一一对应**（组树 = 上游树 + 本地改动移植；不再拍平到组根，我们的 README 叫 `README.dsh-local.md`）。详见 `docs/adr/0006`。
   - 改它们要在**各自目录里**提交、推送，再回 `dsh-extensions` 更新指针；本仓只保存指针。两者都**不再被 `.gitignore` 忽略**（见 `docs/adr/0005`）。
 - 技能部署：`dsh-extensions/install-skill.sh` 扫描三个技能源并软链进 `~/.dsh/skills/`；项目专用技能放各项目自己的 `<项目根>/.dsh/skills/`。见用户级 `~/.dsh/AGENTS.md`「技能」节。
 - 待归位的技能（指向本机不存在项目的）暂存在 `old/`，见 `old/README.md`。
