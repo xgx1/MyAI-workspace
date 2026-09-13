@@ -24,7 +24,7 @@
   ],
   "devInstance": {
     "status": "已下线（2026-09-13）",
-    "note": "原 3081 dev 实例随 dev worktree 一并拆除：dev 分支（本地与 fork 远端）删除、dev/ worktree 移除（释放 2.5G）、dsh-web-dev.service 停用并删除单元文件。DSH 仓库现为单检出 master/，生产实例（3080）就跑在它上面。其 profile 原本是独立精简集，因此本来就无法验证生产侧的插件交付变更。",
+    "note": "原 3081 dev 实例随 dev worktree 一并拆除：dev 分支（本地与 fork 远端）删除、dev/ worktree 移除（释放 2.5G）、dsh-web-dev.service 停用并删除单元文件。DSH 仓库现为单检出 deepseek-harness/（2026-09-13 由 master/ 改名，分支仍为 master），生产实例（3080）就跑在它上面。其 profile 原本是独立精简集，因此本来就无法验证生产侧的插件交付变更。",
     "removedRefs": "dsh-web-dev.service · dev/.dsh-dev-launch.sh · dev/.dsh-home · port 3081"
   },
   "retired": [
