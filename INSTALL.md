@@ -115,6 +115,51 @@ Get-ChildItem -Path $EXT, "$DSH_HOME\profiles" -Recurse -Include package.json,pn
 
 **验收**：`grep -rn '/home/sx/projects/MyAI' --include=package.json --include=pnpm-lock.yaml "$EXT" "$DSH_HOME/profiles" | grep -v node_modules` 无输出。
 
+### 1.4 平台规则：shell 工具与执行器二选一（**Linux = bash，Windows = pwsh，另一个禁用**）
+
+shell 能力落在两个平面上，**两个平面都要对上，且同一平台只挂一种 shell**：
+
+| 平面 | Linux 用 | Windows 用 | 落点 |
+|---|---|---|---|
+| 模型工具（一次性命令） | `@deepseek-ai/dsh-tool-bash` | `@deepseek-ai/dsh-tool-pwsh` | `~/.dsh/.agent-presets/{omni,manager}/agent.cordis.yml` |
+| 模型工具（持久 shell） | `@deepseek-ai/dsh-tool-bash-persistent` | `@deepseek-ai/dsh-tool-pwsh-persistent` | `~/.dsh/.agent-presets/simple/agent.cordis.yml` |
+| 执行器（host 平面，真正起进程） | `@deepseek-ai/dsh-bash-local` | `@deepseek-ai/dsh-pwsh-local` | `~/.dsh/profiles/web/cordis.patch.yml` |
+
+工具行决定「模型看得见哪个工具」，执行器行决定「命令由谁跑」；`dsh-bash-local`（POSIX bash）与
+`dsh-pwsh-local`（PowerShell）语义一一对应——**只挂本平台那一个**。
+
+**必须写成平台表达式，不能写死 `disabled: true`**：`~/.dsh` 是跨设备同步的同一份文件，
+写死会在另一平台上把 shell 工具整个关掉。两行成对且互补：
+
+```yaml
+- id: tool-bash
+  name: '@deepseek-ai/dsh-tool-bash'
+  disabled: !!js process.platform === 'win32'      # Linux 上为 false → 启用
+
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: !!js process.platform !== 'win32'      # Linux 上为 true → 禁用
+```
+
+`!!js` 只允许出现在插件 `config` 与条目 `disabled` 两个位置，其余字段必须字面量。
+自己新写预设时同此规则；三条用户预设（`omni`/`manager`/`simple`）已按此写好。
+
+**验收（Linux，`~/.dsh` 装好后）**：
+
+```bash
+# ① 预设平面：bash 行必须是 === 'win32'，pwsh 行必须是 !== 'win32'
+grep -h -A2 'id: \(tool\|persistent\)-\(bash\|pwsh\)$' ~/.dsh/.agent-presets/{omni,manager,simple}/agent.cordis.yml | grep disabled
+# ② host 平面：本平台执行器（bash-local）在，且它后面没有 disabled 行
+grep -n -A2 'id: bash-local$\|id: pwsh-local$' ~/.dsh/profiles/web/cordis.patch.yml
+```
+
+期望：① 打印 **6 行**——三条预设各一对互补表达式（`=== 'win32'` 一行、`!== 'win32'` 一行），
+顺序永远是 bash 在前；② `bash-local` 在且其后**没有** `disabled:`；
+若同时出现 `pwsh-local`，它必须紧跟 `disabled: !!js process.platform !== 'win32'`（推荐的两行形态，见 §4.6 ④）。
+最强证据是运行时——新开一个会话，Linux 上模型只该拿到 `bash`，没有 `pwsh`。
+
+**验收（Windows）**：预设无需改动（表达式自动翻面），但 **host 执行器要换成 `pwsh-local`**，见 §4.6 ④⑤。
+
 ---
 
 ## 2. Linux 安装
@@ -208,6 +253,8 @@ chmod 600 "$DSH_HOME/.credentials.yaml"        # 非 600 时 DSH 拒绝加载（
 mkdir -p "$DSH_HOME/skills"                    # ← 该目录被 gitignore，新机不存在时安装器会直接退出
 "$EXT/install-skill.sh" --dry-run              # 先看会做什么
 "$EXT/install-skill.sh"
+
+# ⑥ shell 平台规则核对：按 §1.4「验收（Linux）」跑那两条命令（预设表达式 + bash-local 执行器）
 ```
 
 **验收**：`ls "$DSH_HOME/skills" | wc -l` 与 `find "$DSH_HOME/skills" -maxdepth 1 -type l | wc -l` **相等**
@@ -353,6 +400,20 @@ New-Item -ItemType Directory -Force -Path patches | Out-Null
 # ③ 凭据（Windows 不检查 POSIX 权限位）
 Copy-Item "$DSH_HOME\keys.example.yaml" "$DSH_HOME\.credentials.yaml"
 #    填入 DEEPSEEK_API_KEY；或临时用启动环境覆盖：$env:DEEPSEEK_API_KEY='sk-…'; dsh web
+
+# ④ shell 执行器换成 pwsh（Linux 那份插的是 bash-local，它在 Windows 上起不来 bash）
+#    推荐做法：两行都插、各带平台表达式（一次改好，所有设备都不用再动）——
+#    编辑 $DSH_HOME\profiles\web\cordis.patch.yml，把 bash-local 那一行替换成两行：
+#      - id: bash-local
+#        name: '@deepseek-ai/dsh-bash-local'
+#        disabled: !!js process.platform === 'win32'
+#      - id: pwsh-local
+#        name: '@deepseek-ai/dsh-pwsh-local'
+#        disabled: !!js process.platform !== 'win32'
+#    只插 pwsh-local 也能跑，但那份 patch 就与其他设备不同源，下次同步会冲突。
+#    改完在 ~/.dsh 里 commit + push，Linux 那台 pull 后同样成立。
+
+# ⑤ 预设平面无需改动：三条预设带的是平台表达式，Windows 上 tool-pwsh 自动启用、tool-bash 自动禁用
 ```
 
 技能软链：`install-skill.sh` 是 bash 脚本，Windows 走 **Git Bash** 最稳（同一份被验证过的脚本）：
@@ -373,6 +434,17 @@ mkdir -p ~/.dsh/skills
    这正是 Linux 侧用软链要消灭的漂移，所以它是下策而非常规做法。
 
 **验收**：`ls -la ~/.dsh/skills | grep -c '\->'` 大于 300；`install-skill.sh --dry-run` 显示「新建 0」。
+
+**验收（shell 平台规则，对应上面 ④⑤）**：
+
+```powershell
+Get-ChildItem "$DSH_HOME\.agent-presets" -Recurse -Filter agent.cordis.yml |
+  Select-String -Pattern 'id: tool-(bash|pwsh)$' -Context 0,1
+Select-String -Path "$DSH_HOME\profiles\web\cordis.patch.yml" -Pattern 'id: (bash|pwsh)-local$' -Context 0,1
+```
+
+期望：每个预设都打印出**成对互补**的 `disabled: !!js process.platform …`；执行器只出现 `pwsh-local`。
+最强证据是运行时——新会话里模型只该拿到 `pwsh`，没有 `bash`。
 
 ### 4.7 冒烟
 
@@ -540,6 +612,8 @@ $exe = (Get-Content "$APP\bin\current.json" -Raw | ConvertFrom-Json).exe
 | `install-skill.sh` 报「技能根不存在」 | `~/.dsh/skills/` 被 gitignore，新机不存在 | `mkdir -p ~/.dsh/skills` |
 | profile 启动报缺 `patches` | 空目录不进 git | `mkdir -p ~/.dsh/profiles/web/patches` |
 | 凭据不生效/报拒绝加载 | 权限非 `600`（POSIX）；或顶层多了键/空值 | `chmod 600 .credentials.yaml`；只留 `version/refs/records`，删除键＝删整行 |
+| 一个平台上模型拿不到任何 shell 工具 | 预设里被写死 `disabled: true`（同步过去后在另一平台整条禁用） | 改回 `!!js process.platform === 'win32'` 成对表达式（§1.4） |
+| Windows 上 dsh-web 起不来 / 报 shell provider | profile 只插了 `bash-local`，Windows 上没有 bash | 插 `pwsh-local` 替代（§4.6 ④） |
 | MCP 工具凭空消失、无任何报错 | 命令不存在 + `failOnStartupError: false`（静默跳过） | `command -v codebase-memory-mcp playwright-mcp headroom` 逐个确认后重启 dsh-web |
 | 模型请求失败 / `127.0.0.1:8787` 连不上 | `settings.yaml` 的 baseURL 指向 headroom，而它没起 | `systemctl --user start headroom-deepseek`，或把 baseURL 改回官方端点 |
 | `curl :3080` 返回 401 | **正常**：浏览器信任栅栏要求令牌 | 从 `journalctl --user -u dsh-web`（Windows：`.dsh\dsh-web.log`）取 `?token=` 地址 |
