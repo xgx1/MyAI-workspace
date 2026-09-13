@@ -111,37 +111,17 @@ toolFilter 白/黑名单语义以「## M0 结论」引用源码为准；表达�
 5. **「作用域可见」不等于「预设行生效」**：上层作用域的注册会被下层继承，`tools.get(name, presetScope)` 为 true 只能证明名字可见，不能证明来源。要判归属必须用**无主作用域**对照（一个任何预设都不拥有的 scope key）或直接读真实会话首个 `request/header` 的工具表。本次首轮 t18 验收就被这条假阳过。
 6. **bundle 侧与预设侧双注册是静默缺陷**：host bundle 注册落在 tools 注册表全局层，任何预设的会话都继承——文档（ADR-0004）禁止、代码却保留，一条 `pnpm test` 也拦不住。修完必须用「预设 A 会话 vs 预设 B 会话」的对照实证，而不是只看 mount 是否通过。
 
-## 收官记录（2026-09-10 续作会话，session-c56045b0）
+## 遗留事项
 
-> **2026-09-13 追注**：以下路径与分支名是 **2026-09-10 当时的实况**，请勿照抄执行——`dev/task-manager-orchestration`
-> 分支、`dev/` worktree 与 `dsh-extensions-dev/` 检出均已下线。该插件现在的代码位置是
-> `dsh-extensions/plugins/dsh-task-manager`（分支 `main`），部署链为
-> `~/.dsh/profiles/web/node_modules/dsh-task-manager` → 上述路径。预设那一条仍然有效。
+- GUI 人工复验：新建 / 详情 / 类别筛选 / 需终审勾选 / 管理模式真会话派发演示。
 
-### 交付状态
-
-- 代码：`dev/task-manager-orchestration` 共 10 提交，末提交 `c2bcd47`（ADR-0004 修复）；worktree 干净。
-- 回归：worktree 内 `pnpm test` **47/47 绿**（原 43 + 新增 entry-split 4），`typecheck` 干净，`build` 产出 lib/ 已更新。
-- 部署链：`~/.dsh/profiles/web/node_modules/dsh-task-manager` → `/home/sx/projects/MyAI/dsh-extensions-dev/plugins/dsh-task-manager`；本机 14:26 重启，dsh-web 14:27:00 起即载入含修复的 lib。
-- 预设：`~/.dsh/.agent-presets/manager/`（名「管理模式」、行 `dsh-task-manager/tools`、persona 7 步协议、无 captain 目录、omni/simple 未动）。
-
-### 实证（活进程，2026-09-10 16:2x–16:3x）
-
-- `standingKeyFor('manager')` → OK（无 taskManager 碰撞、无 ERR_PACKAGE_PATH_NOT_EXPORTED）。
-- 真实管理模式会话（GUI 选预设后发一条消息）首个 `request/header`：**105 个工具，含全部 7 个 task_\***；同进程 `omni` 会话 98 个工具、**0 个 task_\***（对照成立）。
-- 迁移：`/plugins/dsh-task-manager/state` 活进程返回旧 2 条记录（2026-08-29、无编排字段），默认值补齐、无损。
-- 路由：`/captains` 200 `{"captains":[]}`。
-
-### 本轮新发现并已修复
-
-ADR-0004 第二后果被违反：`src/index.ts` 仍保留 M2 的 bundle 侧 7 工具注册（`registerTools` + `internal/service` 分支），把 7 个名字写进 tools 注册表**全局层**，任何预设的会话都继承（实测：无主 scope key 全 true；omni 会话目录里就有管理工具）。修复 = 删除 bundle 侧注册（服务/路由/存储不动），新增 `tests/entry-split.test.ts` 固定「bundle apply() 零工具注册、且不解析 tools 服务」。影响：修复后只有挂该行的预设（管理模式）会话有 task_\*，符合 ADR-0004 与「定案补记」配置面表。
-
-### 留给用户
-
-- ~~`dev/task-manager-orchestration` 合并回 `main` 的时机~~ —— **已作废（2026-09-13）**：该分支与 `dev/` worktree 已随双检出下线一并移除，此项无需再执行。相关代码现位于工作区 `dsh-extensions/plugins/dsh-task-manager`（分支 `main`）。
-- GUI 人工复验：新建/详情/类别筛选/需终审勾选/管理模式真会话派发演示（末项已具备全部条件；本轮已用 GUI 选预设 + 单轮消息验证工具面）。
-- AgentTeams 团队 `manager-task-orchestration` 仍绑定**原会话** `session-c7fd5194`，本会话无权 `agent_teams_delete`；要删需回原会话执行或手工清理 `.agent-teams/manager-task-orchestration/`。
-- `dsh-continual-evolve` 6 个既有失败与本 feature 无因果；其基线日志随 `.scratch/manager-task-orchestration/` 清理一并删除，可用 `pnpm test` 重新生成。
+> **原「收官记录」节已于 2026-09-13 精简删除。** 该节记录的是 2026-09-10 当时的状态快照——
+> 交付状态（提交号 `c2bcd47`、测试 47/47、部署链）、活进程实证（105/98 工具计数、
+> `standingKeyFor` 结果、路由返回），以及缺陷修复叙述。这些都能从 git 历史、测试与运行中的
+> profile 直接查得，留着只会随现实漂移；缺陷本身与其修复由 ADR-0004 与「经验教训」第 6 条承载。
+> 同节另有三条已无对象：`dev/task-manager-orchestration` 合并（分支与 worktree 已删）、
+> AgentTeams 团队 `manager-task-orchestration` 清理（`.agent-teams/` 已不存在）、
+> `dsh-continual-evolve` 基线日志（该插件已删除）。
 
 ## v1 明确不做
 
@@ -237,9 +217,3 @@ else { await ctx.subagents.followup(managerAgent, targetSessionId, content, { so
 - **A（推荐起点）**：队长仍为 Manager 的 continuable 子会话，继承管理模式预设；差异化用**创建期 per-child 参数**承载——`persona`=队长章程+纪律（遮蔽父预设 persona，durable 于 descriptor、冷恢复重放），`toolFilter` 收窄工具面；task_claim/task_report 工具行挂管理模式预设或 host 平面（服务端已有 `exec.agent` 身份校验兜底）。M3 的「队长模式预设」退化为「预设内 persona 分层 + 身份校验」，或仅作 GUI 展示差异。
 - **B**：创建后立刻 `agentPresets.recompose(agentCtx,'captain')`（agent-presets/src/index.ts:458-472）换绑预设——合同要求「agent 未产出任何内容」（caller owns that check），startContinuable resolve（inbox 接受）与首个 turn 开跑之间窗口极窄，风险路径。
 - **C**：队长改走顶层会话（sessions 服务创建+预设选择=队长模式）——预设/裁剪/章程全按计划成立，但失去 subagent 父子关系与冷恢复投递通道，唤醒需另建（改动最大）。
-
-### M0 产出清单
-
-- 建会话调用面：`startContinuable` 全参数表 + 否定性事实（无 preset/cwd 参数）→ 结论 1。
-- 投递原语：`inject/followup/subagents.followup` 三通道语义与验收序列 → 结论 2。
-- 装载通道：可引用 + 两项附带条件 + R2 三路径修正 → 结论 3。
