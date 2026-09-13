@@ -1,6 +1,7 @@
-# 嵌套的独立仓库：它们各自有自己的 .git 与远端，这里只做工作区级资产的版本控制
-/deepseek-harness/
-/dsh-extensions/
+# 子仓（deepseek-harness / dsh-extensions）**不再是忽略项**——它们已登记为
+# git submodule，由 .gitmodules 记录（见 docs/adr/0005）。本仓保存指向各自提交的指针。
+#
+# 注：update-app 位于 ~/projects/update-app（工作区之外），因此不是本仓的子模块。
 
 # 运行时状态（AgentTeams 的任务/成员/邮箱状态，可再生）
 /.agent-teams/

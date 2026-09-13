@@ -1,0 +1,6 @@
+[submodule "dsh-extensions"]
+	path = dsh-extensions
+	url = https://github.com/xgx1/dsh-extensions.git
+[submodule "deepseek-harness"]
+	path = deepseek-harness
+	url = https://github.com/xgx1/deepseek-harness.git
