@@ -11,13 +11,31 @@
 | `dsh-task-manager` | `dsh-extensions/plugins/dsh-task-manager` | ✅ dsh-extensions 仓库（分支 `main`） | 自研；改完在仓库里提交、`pnpm build` |
 | `dsh-sidebar-taskbar` | `dsh-extensions/plugins/dsh-sidebar-taskbar` | ✅ dsh-extensions 仓库（分支 `main`） | 自研；同上 |
 | `web-dsh-web-extension` | `dsh-extensions/plugins/web-dsh-web-extension` | ✅ dsh-extensions 仓库（分支 `main`） | 自研；同上 |
-| `@changfenhuang/dsh-genui` | `_dsh_plugins_src/dsh-genui` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-genui` |
-| `@deepseek-ai/dsh-toolkit` | `_dsh_plugins_src/dsh-toolkit` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-toolkit` |
-| `@dsh-external/dsh-drop-to-path` | `_dsh_plugins_src/dsh-drop-to-path` | ✅ 自带 `.git` | `github.com/loudMore/dsh-drop-to-path` |
+| `@changfenhuang/dsh-genui` | `dsh-extensions/vendor/dsh-genui` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-genui` |
+| `@deepseek-ai/dsh-toolkit` | `dsh-extensions/vendor/dsh-toolkit` | ✅ 自带 `.git` | `github.com/omdsh-dev/dsh-toolkit` |
+| `@dsh-external/dsh-drop-to-path` | `dsh-extensions/vendor/dsh-drop-to-path` | ✅ 自带 `.git` | `github.com/loudMore/dsh-drop-to-path` |
 | `@memtensor/memos-local-plugin` | npm registry（`2.0.19`） | — | `github.com/MemTensor/MemOS`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
 | `@nanmicoder/dsh-agent-teams` | npm registry（`0.1.17`） | — | `github.com/NanmiCoder/dsh-agent-teams`——2026-09-13 由 link: 源码目录改为 npm 交付，见下 |
 | `dsh-context-compression-selector` | npm registry（`0.1.0`） | — | `github.com/WilliamShi666/dsh-context-compression-selector` |
 | `dsh-lan-access` | npm registry（`^0.1.1`） | — | 第三方 npm 包 |
+
+### 目录布局：自研 vs 第三方（2026-09-13 归并）
+
+```text
+dsh-extensions/              ← 自研仓库（git 远端 xgx1/dsh-extensions）
+├── plugins/                 ← 自研插件源码，受本仓版本控制
+├── skills/                  ← 自研技能，受本仓版本控制
+└── vendor/                  ← 第三方上游克隆（被本仓 .gitignore 忽略）
+    ├── dsh-genui/           ← 各自带 .git 与上游远端，独立提交/拉取
+    ├── dsh-toolkit/
+    ├── dsh-drop-to-path/
+    └── rider-skills/        ← JetBrains 官方 rider-skills
+```
+
+原工作区根下的 `_dsh_plugins_src/` 与 `rider-skills/` 两个一级目录已并入 `dsh-extensions/vendor/`。
+`vendor/` 必须在 `dsh-extensions/.gitignore` 中忽略——否则 `git add -A` 会把它们记成
+gitlink（子模块引用）却不含内容。搬迁同步改了：生产 profile 的 3 条 `link:` 与
+`node_modules` 符号链接、`update-app/applist.toml`、本文件、`dsh-extension-inventory.json`。
 
 ## 二、第三方插件的接入方式与现状
 
@@ -57,7 +75,7 @@ profile 侧改动（`~/.dsh/profiles/web/`）：
   `libonnxruntime.so.1` 由它的 postinstall 拉取，**不能关**（关了 CPU 推理会缺库）。
 - 回滚：**不依赖任何 `.bak` 快照**（机器上的备份已于同日清理移除）。把 `package.json` 改回 `link:` 形状本身
   也没用——源码目录已删，链接会悬空。真正的回退路径是：
-  1. 重新 clone 上游（`github.com/MemTensor/MemOS`、`github.com/NanmiCoder/dsh-agent-teams`）到 `_dsh_plugins_src/` 下；
+  1. 重新 clone 上游（`github.com/MemTensor/MemOS`、`github.com/NanmiCoder/dsh-agent-teams`）到 `dsh-extensions/vendor/` 下；
   2. 把 `package.json` 里两条依赖改回 `link:`（原路径见本文件第一节表格的「源码路径」列）；
   3. `pnpm install` 重建依赖树，并把 `pnpm-workspace.yaml` 里本文件第 46–50 行提到的 `allowBuilds` 增补去掉。
   换言之：**本文件 + 上游仓库就是完整的回滚材料**，机器上不再保留快照副本。

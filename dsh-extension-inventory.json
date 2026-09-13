@@ -17,9 +17,9 @@
     { "name": "dsh-task-manager", "delivery": "link: dsh-extensions/plugins/", "note": "自制；任务管理器" },
     { "name": "dsh-context-compression-selector", "delivery": "npm 0.1.0", "note": "压缩选择器；context-compression.profile=off" },
     { "name": "dsh-lan-access", "delivery": "npm ^0.1.1", "note": "局域网访问" },
-    { "name": "@changfenhuang/dsh-genui", "delivery": "link: _dsh_plugins_src/dsh-genui", "note": "上游 omdsh-dev/dsh-genui；回答内联 UI" },
-    { "name": "@deepseek-ai/dsh-toolkit", "delivery": "link: _dsh_plugins_src/dsh-toolkit", "note": "上游 omdsh-dev/dsh-toolkit；10 个确定性工具" },
-    { "name": "@dsh-external/dsh-drop-to-path", "delivery": "link: _dsh_plugins_src/dsh-drop-to-path", "note": "上游 loudMore/dsh-drop-to-path；拖拽→路径 chips" },
+    { "name": "@changfenhuang/dsh-genui", "delivery": "link: dsh-extensions/vendor/dsh-genui", "note": "上游 omdsh-dev/dsh-genui；回答内联 UI（2026-09-13 由 _dsh_plugins_src/ 迁入 vendor/）" },
+    { "name": "@deepseek-ai/dsh-toolkit", "delivery": "link: dsh-extensions/vendor/dsh-toolkit", "note": "上游 omdsh-dev/dsh-toolkit；10 个确定性工具（同日迁入）" },
+    { "name": "@dsh-external/dsh-drop-to-path", "delivery": "link: dsh-extensions/vendor/dsh-drop-to-path", "note": "上游 loudMore/dsh-drop-to-path；拖拽→路径 chips（同日迁入）" },
     { "name": "@nanmicoder/dsh-agent-teams", "delivery": "npm 0.1.17", "note": "上游 NanmiCoder；2026-09-13 由 link: 源码目录改为 npm 交付，运行时载荷逐字节一致" },
     { "name": "@memtensor/memos-local-plugin", "delivery": "npm 2.0.19", "note": "上游 MemTensor；2026-09-13 由 link: 源码目录改为 npm 交付，载荷逐字节一致；依赖树 461M 现装在 profile 内" }
   ],
@@ -31,6 +31,7 @@
   "retired": [
     "_dsh_plugins_src/MemOS（2026-09-13 整树删除；插件改 npm 2.0.19 交付）",
     "_dsh_plugins_src/dsh-agent-teams（2026-09-13 整树删除；插件改 npm 0.1.17 交付）",
+    "_dsh_plugins_src/ 与 rider-skills/ 两个工作区一级目录（2026-09-13 并入 dsh-extensions/vendor/；4 个第三方上游克隆保留各自 .git 与远端）",
     "relink-plugin-deps.mjs（2026-09-13 删除；为 link: 插件补 node_modules 解析链的临时工具，硬编码路径 dsh-web-ui/… 已失效）",
     "dsh-remote-web-ui（源码目录 dsh-web-ui 已删，未装载）",
     "deepseek-vision / dsh-session-tabs（残缺源码，已 git rm）",
@@ -53,6 +54,6 @@
   ],
   "workspace": {
     "repo": "xgx1/MyAI-workspace（private）",
-    "note": "顶层工作区仓库只版本化工作区级资产（AGENTS.md/CONTEXT.md/docs/本文件）；master、dsh-extensions 等以 /xxx/ 形式排除，各由自己的仓库负责"
+    "note": "顶层工作区仓库只版本化工作区级资产（AGENTS.md/CONTEXT.md/docs/本文件）；deepseek-harness、dsh-extensions 等以 /xxx/ 形式排除，各由自己的仓库负责"
   }
 }

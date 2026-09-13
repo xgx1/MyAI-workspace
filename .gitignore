@@ -1,9 +1,7 @@
 # 嵌套的独立仓库：它们各自有自己的 .git 与远端，这里只做工作区级资产的版本控制
 /deepseek-harness/
 /dsh-extensions/
-/rider-skills/
 /update-app/
-/_dsh_plugins_src/
 
 # 运行时状态（AgentTeams 的任务/成员/邮箱状态，可再生）
 /.agent-teams/
