@@ -36,7 +36,9 @@ dsh-extensions/              ← 自研仓库（git 远端 xgx1/dsh-extensions�
 原工作区根下的 `_dsh_plugins_src/` 与 `rider-skills/` 两个一级目录已并入 `dsh-extensions/vendor/`。
 `vendor/` 必须在 `dsh-extensions/.gitignore` 中忽略——否则 `git add -A` 会把它们记成
 gitlink（子模块引用）却不含内容。搬迁同步改了：生产 profile 的 3 条 `link:` 与
-`node_modules` 符号链接、`update-app/applist.toml`、本文件、`dsh-extension-inventory.json`。
+`node_modules` 符号链接、`update-app/applist.toml`、本文件。
+（原先还有一份根目录的 `dsh-extension-inventory.json` 手工清单，2026-09-13 已删除——
+它与本文档、profile `package.json` 信息重复，退役史可从 git 历史取回。）
 
 ### 2026-09-13：主检出改名后的 vendor 内链重指（一次真实故障）
 
@@ -67,6 +69,12 @@ done
 **纪律**：任何改名/移动 `deepseek-harness` 的动作，做完先跑上面的重指，确认
 `find /home/sx/projects/MyAI/dsh-extensions -xtype l` 输出为空，再重启 `dsh-web`；
 否则生产直接进崩溃循环。
+
+⚠ **`dsh --profile web --dump-config` 查不出这类故障，不要拿它当唯一验收**（2026-09-13 实测踩到）：
+它只**组合配置树**，不 import 插件模块，所以插件内部悬空的 `node_modules` 链接它照过不误
+（当时输出 54 个条目、0 报错，看着完全正常）。悬空链接只有在**真正加载插件**时才会暴露——
+即 `dsh-web` 启动那一刻。因此涉及路径变更的验收顺序是：
+① `find … -xtype l` 输出为空 → ② `dump-config` 组合成功 → ③ 才重启 `dsh-web`。
 
 ## 二、第三方插件的接入方式与现状
 
