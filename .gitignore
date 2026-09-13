@@ -1,5 +1,7 @@
 # 嵌套的独立仓库：它们各自有自己的 .git 与远端，这里只做工作区级资产的版本控制
+# 过渡：master 是指向 deepseek-harness 的符号链（生产重启后删除）
 /master/
+/deepseek-harness/
 /dsh-extensions/
 /dsh-context-compression-selector/
 /rider-skills/
