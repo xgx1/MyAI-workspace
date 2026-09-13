@@ -55,9 +55,12 @@ profile 侧改动（`~/.dsh/profiles/web/`）：
 - **磁盘是净增的**：`~/.dsh/profiles/web/node_modules` 从 15M 涨到 1.2G（其中 `onnxruntime-node` 513M、
   MemOS 依赖树 461M），而工作区只回收 600M。`onnxruntime-node` 的 302M CUDA provider 与 34M
   `libonnxruntime.so.1` 由它的 postinstall 拉取，**不能关**（关了 CPU 推理会缺库）。
-- 回滚：`~/.dsh/profiles/web/` 下留有 `package.json.bak-20260913-070211`、`pnpm-lock.yaml.bak-...`、
-  `pnpm-workspace.yaml.bak-...`；恢复后重跑 `pnpm install` 即可回到 link: 形态
-  （但源码目录已删，需先重新 clone 对应上游仓库）。
+- 回滚：**不依赖任何 `.bak` 快照**（机器上的备份已于同日清理移除）。把 `package.json` 改回 `link:` 形状本身
+  也没用——源码目录已删，链接会悬空。真正的回退路径是：
+  1. 重新 clone 上游（`github.com/MemTensor/MemOS`、`github.com/NanmiCoder/dsh-agent-teams`）到 `_dsh_plugins_src/` 下；
+  2. 把 `package.json` 里两条依赖改回 `link:`（原路径见本文件第一节表格的「源码路径」列）；
+  3. `pnpm install` 重建依赖树，并把 `pnpm-workspace.yaml` 里本文件第 46–50 行提到的 `allowBuilds` 增补去掉。
+  换言之：**本文件 + 上游仓库就是完整的回滚材料**，机器上不再保留快照副本。
 
 ## 三、更新前的通用纪律
 
