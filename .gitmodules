@@ -4,3 +4,6 @@
 [submodule "deepseek-harness"]
 	path = deepseek-harness
 	url = https://github.com/xgx1/deepseek-harness.git
+[submodule "modelscope-cli"]
+	path = modelscope-cli
+	url = https://github.com/xgx1/modelscope-cli.git
