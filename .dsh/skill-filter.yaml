@@ -1,0 +1,39 @@
+# MyAI (DSH development) project skill filter config
+# Denies Unreal Engine, .NET, MAUI, and other non-relevant categories.
+# Remaining skills are inherited from personal config (allow: ["*"]).
+
+allow:
+  - "*"
+
+deny:
+  # Unreal Engine (86 skills)
+  - "unreal-*"
+  - "ue*"
+  - "ue5-*"
+  # .NET ecosystem (18 skills)
+  - "dotnet-*"
+  - "maui-*"
+  - "msbuild-*"
+  - "mtp-*"
+  - "migrate-*"
+  - "nuget-*"
+  - "csharp-*"
+  - "clr-*"
+  # Project-specific (13 skills)
+  - "yellowriver-*"
+  - "hydrovault-*"
+  # Crash symbolication (3 skills)
+  - "apple-*"
+  - "android-*"
+  # Binary/tooling (5 skills)
+  - "binlog-*"
+  - "baidupcs-*"
+  - "renderdoc-*"
+  # Misc (5 skills)
+  - "template-*"
+  - "exp-*"
+  - "coverage-*"
+  - "crap-*"
+  - "microbenchmarking"
+  - "strip-cpp-comments"
+  - "word-docx"
