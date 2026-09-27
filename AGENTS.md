@@ -44,9 +44,10 @@
 
 - **代码**：`dsh-extensions/plugins/dsh-laya-router`（受 dsh-extensions 版本控制，`link:` 装进 dev home 的 `web` + `headless` profile，bundle 行 `laya-router`）。改完要 `pnpm run build`——加载的是 `lib/`，源码改了不重建会静默跑旧代码。
 - **做什么**：每用户轮次在 `agent/pre-step` 问 Laya 三个 `choice`（难度／时间预算／是否还在原任务上）→ 在 `agent/request` 的 `step === 1` 应用路由与思考档位；判定「换任务 + 上下文 >40%」时在 pre-step 调 `compactIfNeeded(..., 'context-overflow')`。换路由时自己追加 `[model routed: …]` 通知（原生那条只由用户手动切模型触发）。
+- **谁会被路由**：模型选择器里有一组「自动（判断层逐轮选择）」的 `auto` 条目（插件注册的 LLM provider；目录是注册表投影）。**只有选中 `auto` 的会话被路由**，选具体模型就完全听人的；会话没显式选择时看部署默认 `agent-default-model`。旧语义（`live` 时路由所有会话）保留为 `applyWhen: always`。
 - **模式**：`mode: off | shadow | live`，**dev 实例已开 live**（配置在 `~/.dsh-dev/profiles/web/cordis.patch.yml`）。运行时用 `/route shadow|live|off` 切换，持久化在 `$DSH_HOME/laya-router-state.json`（重启仍生效）；`/route status` 看最近一次决策与当前模式，`/route stats [n]` 看路由/依据/压缩/耗时分布，`/route reset` 回到配置默认。
 - **决策日志**：`$DSH_HOME/laya-router.jsonl`（含判断状态裁剪了几条消息、三个答案的置信度、最终路由与依据、侧车耗时）。启动时服务日志会打 `[laya-router] ready (mode=…)` 与 `/route registered …` 两行——**判断 `/route` 有没有挂上就看这两行**（静默失败与正常无法从别处区分）。
-- **设计取舍**：见 `docs/adr/0008`（为什么状态要自己拼、为什么全用 `choice`、为什么先影子）；上游坑与实测数字在插件自己的 README 里；`state`/`policy`/`stats` 三个纯函数模块有 45 个单测（`pnpm test`）。
+- **设计取舍**：见 `docs/adr/0008`（为什么状态要自己拼、为什么全用 `choice`、为什么先影子）；上游坑与实测数字在插件自己的 README 里；`state`/`policy`/`stats`/`auto-route` 四个模块有 49 个单测（`pnpm test`）。
 - **验收现状**：shadow 与 live 都在 dev home 的 headless profile 上实测过；live 已切到 3081，`model/selection` 会落库（UI 选择器跟着显示路由结果）、路由与档位真的写进 request/header。**长期效果还没观察**——先跑几天，拿 `/route stats` 与 jsonl 对表再决定要不要调路由表。
 
 ## 技能部署

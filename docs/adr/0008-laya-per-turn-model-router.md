@@ -23,3 +23,13 @@
 - **先影子后生效**：`mode: shadow | live`，默认 shadow。低置信（< 阈值）与「文本没说」走同一条路——不改动，除非配置了「未标注默认档」（默认 `md`）。
 - 新增一个运行期依赖：`laya-sidecar.service`（`:8083`）。侧车不可用时什么都不改，只记录。
 - 已知取舍：判断状态被裁剪时，答案只基于幸存的前缀；记录里带 `elided` 字段，便于事后判断「这次错是不是因为信息被剪了」。Laya 基础检查点在它自己的 typed-decisions 基准上接近瞎猜，所以影子期的对表数据是开 live 的前提。
+
+## 修订：`auto` 是显式开关（2026-09-27 追加）
+
+初版让判断层在 `live` 模式下路由**每个**会话。用户随后要求「模型选择里要有一个 auto，来自动选择模型」，触发条件因此改成显式选择：
+
+- 插件注册一个只含 `auto` 的 LLM provider——浏览器模型目录是 LLM 注册表的投影（`listProviders()` → `listModels()`），这是唯一受支持的入口方式。
+- **只有选中 `auto` 的会话被路由**；选具体模型 = 判断层完全不插手（也不再为它花一次 Laya 调用）。会话没有显式选择时看部署默认 `agent-default-model`。
+- 任何情况下 `auto` 都必须解析成真实模型：`live` 用 Laya 的选择，`off` / `shadow` 用静态默认档（`unlabeledRoute`）。占位适配器的 `stream()` 只有在插件根本没挂载时才会被触达，届时 loud 失败并说明原因。
+- `auto` 会话不写 `model/selection`——选择器继续显示 `auto`（那正是它作出的长期选择）；每轮真实模型留在 `[model routed: …]` 通知与 `request/header` 里。
+- 旧语义保留为 `applyWhen: always`（`live` 时路由所有会话）。
