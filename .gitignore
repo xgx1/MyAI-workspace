@@ -3,6 +3,10 @@
 #
 # 注：update-app 位于 ~/projects/update-app（工作区之外），因此不是本仓的子模块。
 
+# DSH 开发用的 git worktree（deepseek-harness 的分支 dev 检出）：
+# 它不是 submodule、也不该被本仓跟踪——只是同一 .git 的另一个工作目录。
+/deepseek-harness-dev/
+
 # 运行时状态（AgentTeams 的任务/成员/邮箱状态，可再生）
 /.agent-teams/
 
