@@ -40,6 +40,14 @@
 - **两个坑**：① 侧车必须清 `*_proxy`——`all_proxy=socks5://` 会让 httpx 报 `socksio` 缺失直接拒启（脚本里已 `unset`）；② 上游 english 检查点自带非法温度，启动日志会警告 `Treat confidence from the affected entries as uncalibrated`。
 - **纪律偏差**：这次按「最小闭环」走的是 npm 交付（`dsh plugin add dsh-laya`），不是 ADR-0007 的 fork → submodule → `link:`。要进**生产** profile 前应先补成源码安装。
 
+### 判断层：逐轮模型路由（自研，2026-09-27）
+
+- **代码**：`dsh-extensions/plugins/dsh-laya-router`（受 dsh-extensions 版本控制，`link:` 装进 dev home 的 `web` + `headless` profile，bundle 行 `laya-router`）。改完要 `pnpm run build`——加载的是 `lib/`，源码改了不重建会静默跑旧代码。
+- **做什么**：每用户轮次在 `agent/pre-step` 问 Laya 三个 `choice`（难度／时间预算／是否还在原任务上）→ 在 `agent/request` 的 `step === 1` 应用路由与思考档位；判定「换任务 + 上下文 >40%」时在 pre-step 调 `compactIfNeeded(..., 'context-overflow')`。换路由时自己追加 `[model routed: …]` 通知（原生那条只由用户手动切模型触发）。
+- **模式**：`mode: off | shadow | live`，**默认 shadow**（只记录不改动）。决策逐条写进 `$DSH_HOME/laya-router.jsonl`（含裁剪了几条消息、三个答案的置信度、最终路由与依据）。开 live 只需在 profile patch 加 `- id: laya-router` + `config: { mode: live }`。
+- **设计取舍**：见 `docs/adr/0008`（为什么状态要自己拼、为什么全用 `choice`、为什么先影子）。上游坑与实测数字在插件自己的 README 里。
+- **验收现状**：shadow 与 live 两条路都在 dev home 的 headless profile 上实测过；**live 尚未在 3081 的日常会话里长期跑**——开 live 前先看一段 shadow 记录对不对得上你的判断。
+
 ## 技能部署
 
 - `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、`~/projects/*/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
