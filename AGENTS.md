@@ -28,6 +28,18 @@
 - 验证开发改动一律走 dev 实例 3081；**不要**拿 3080 当试验台，也不要用重启 `dsh-web.service` 的方式看效果（会中断当前对话）。
 - 真正会影响生产的动作（重启 `dsh-web.service`、改 `~/.dsh` 的生产 composition 或 unit、动 `dsh-extensions` 里被生产 `link:` 的目录）**先问用户**。
 
+## 本地 Laya 决策模型（dev 侧，2026-09-27 接入）
+
+给 agent 补「快判断」能力：state + 类型化问题（`noul` 是/否、`choice` 选一、`score` 打分）→ 一次前向返回校准概率，不生成文本。
+
+- **模型**：`convaiinnovations/laya`（421M，Apache-2.0，ModernBERT-large 编码器 + 决策头）。权重在 `~/.model/laya/hf`（用 `HF_HOME` 指过去，遵守「模型一律在 `~/.model`」的约定）；venv 在 `~/.local/share/laya/venv`（Python 3.12 + `torch 2.10.0+rocm7.0`，gfx1100 轮子）。
+- **侧车**：`laya-sidecar.service` = `laya-mcp serve --model english --port 8083`，启动脚本 `~/.local/share/laya/run-sidecar.sh`。实测 **18–24 ms/次**（3 问一次前向），空缓存冷启动 82 s、有缓存 9.4 s。
+- **显存**：english + multilingual 常驻约 **5.5 GB**。**与 Bonsai 2 27B（100K 上下文峰值 12.3 GB）无法同时驻留**，二选一：`systemctl --user stop laya-sidecar`。
+- **DSH 侧**：npm 插件 `dsh-laya`（v0.1.4）装在 **dev home** 的 `web` 与 `headless` profile 里，`sidecarUrl` 必须在 patch 里覆盖成 `http://127.0.0.1:8083`（插件默认值 8787 是 headroom 的端口）。模型可见工具：`laya_ask`、`laya_plan`。注意：从 profile 目录跑 `node -e "import('dsh-laya')"` 会报 `Cannot find package '@deepseek-ai/dsh-tools'`，**那是误报**——harness 自己解析安装态的 `@deepseek-ai/*`；判据是会话里工具真的出现（headless 实测已出现）。
+- **自检**：`curl -s localhost:8083/health`（看 `degraded`）· `~/.local/share/laya/venv/bin/laya-mcp doctor`（先在 GPU 上真跑一个算子再下结论，别信 `torch.cuda.is_available()`）。
+- **两个坑**：① 侧车必须清 `*_proxy`——`all_proxy=socks5://` 会让 httpx 报 `socksio` 缺失直接拒启（脚本里已 `unset`）；② 上游 english 检查点自带非法温度，启动日志会警告 `Treat confidence from the affected entries as uncalibrated`。
+- **纪律偏差**：这次按「最小闭环」走的是 npm 交付（`dsh plugin add dsh-laya`），不是 ADR-0007 的 fork → submodule → `link:`。要进**生产** profile 前应先补成源码安装。
+
 ## 技能部署
 
 - `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、`~/projects/*/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
