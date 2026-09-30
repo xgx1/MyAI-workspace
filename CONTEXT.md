@@ -86,6 +86,14 @@ _Avoid_: 代理层、中间件、缓冲层
 上游以 OpenAI Responses 协议暴露的访问面；只有实现该协议的 provider 层能用它，声明不了就换不了。
 _Avoid_: 新接口、v1/responses、兼容端点
 
+**退化轮 (Degenerate Turn)**:
+把一轮判成「模型没给出任何客户端可用输出」（零可见文本、零工具调用）的结论；判据是到达客户端的可见字符数与过滤层扣下的残渣数之差，判错的表现是整轮抛 in-band stream error 而不是交付重试内容。
+_Avoid_: 空轮、无输出轮、零 token 轮
+
+**残渣 (Residue)**:
+过滤层从流里丢弃、客户端拿到也无从行动的 markup——未闭合的 render tag 头、伪造的 marker 行。过滤层「按内容保全」释放的探看前缀（本来就不是 markup 的散文）不算残渣。
+_Avoid_: 垃圾数据、脏数据、被过滤内容
+
 ### 仓库拓扑
 
 **子仓库 (Sub-repo)**:
