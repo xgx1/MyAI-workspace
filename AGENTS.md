@@ -12,8 +12,8 @@
   - `~/.dsh-dev/settings.yaml` 与 `profiles/web/` 都是**快照副本**（不跟随生产）：同步生产 composition 用 `cp ~/.dsh/profiles/web/{cordis.patch.yml,package.json,pnpm-lock.yaml} ~/.dsh-dev/profiles/web/ && (cd ~/.dsh-dev/profiles/web && pnpm install --registry=https://registry.npmmirror.com --prefer-offline)`。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
-- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（各 4 个与 14 个，共 18 个）：
-  - `vendor/` = 第三方插件源码，均为生产 `link:` 目标。`dsh-genui` / `dsh-toolkit` / `dsh-drop-to-path` 直连上游；`dsh-evolve-modes` 是 `xgx1` fork（origin=fork、upstream=上游）。
+- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（各 2 个与 13 个，共 15 个）：
+  - `vendor/` = 第三方插件源码，均为生产 `link:` 目标。`dsh-genui` 直连上游（omdsh-dev）；`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）。
   - `skills/` = 技能分组仓，一个上游仓库一组。组树 = 上游树 + 本地改动移植。详见 `docs/adr/0006`。
   - 改它们要在**各自目录里**提交、推送，再回 `dsh-extensions` 更新指针；本仓只保存指针。两者都不被 `.gitignore` 忽略（见 `docs/adr/0005`）。
 - 位置纪律与动手前确认流程见用户级 `~/.dsh/AGENTS.md`「修改位置」节；本工作区先例复盘：`docs/plans/manager-task-orchestration.md`「经验教训」节。

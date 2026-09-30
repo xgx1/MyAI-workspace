@@ -208,13 +208,12 @@ chmod +x "$HARNESS/apps/cli/lib/bin.js"
 for p in "$EXT"/plugins/*/; do (cd "$p" && pnpm install && pnpm run build); done
 
 (cd "$EXT/vendor/dsh-genui"       && pnpm install && pnpm run build)
-(cd "$EXT/vendor/dsh-evolve-modes" && pnpm install && pnpm run build)
-(cd "$EXT/vendor/dsh-toolkit"     && npm install  && npm run build:all)   # 这个仓用 npm + 10 个子包
+(cd "$EXT/vendor/billion-context" && pnpm install && pnpm run build)
 ```
 
 **验收**：以下路径全部存在——
-`$EXT/plugins/{dsh-sidebar-taskbar,dsh-task-manager,web-dsh-web-extension}/lib/index.js`、
-`$EXT/vendor/{dsh-genui,dsh-evolve-modes,dsh-toolkit}/lib/index.js`。
+`$EXT/plugins/{dsh-laya-router,dsh-llm-retry-schedule,dsh-sidebar-taskbar,dsh-task-manager}/lib/index.js`、
+`$EXT/vendor/dsh-genui/lib/index.js`、`$EXT/vendor/billion-context/dist/index.js`（这个仓产物在 `dist/`）。
 
 ### 2.5 装 update-app（update-all 的 CLI）
 
@@ -362,13 +361,12 @@ if ($userPath -notlike "*\.local\bin*") {
 Get-ChildItem "$EXT\plugins" -Directory | ForEach-Object {
   Push-Location $_.FullName; pnpm install; pnpm run build; Pop-Location
 }
-foreach ($v in 'dsh-genui','dsh-evolve-modes') {
+foreach ($v in 'dsh-genui','billion-context') {
   Push-Location "$EXT\vendor\$v"; pnpm install; pnpm run build; Pop-Location
 }
-Push-Location "$EXT\vendor\dsh-toolkit"; npm install; npm run build:all; Pop-Location
 ```
 
-**验收**：同 §2.4 的 6 个 `lib\index.js` 路径全部存在。
+**验收**：同 §2.4 的 `lib\index.js`（外加 billion-context 的 `dist\index.js`）路径全部存在。
 
 ### 4.5 装 update-app
 
