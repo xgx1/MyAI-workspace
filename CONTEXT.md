@@ -72,6 +72,20 @@ _Avoid_: 话题漂移、上下文切换、topic shift
 模型选择器里的 `auto` 条目——选中它表示这个会话的模型交给判断层逐轮决定；选具体模型则表示这一项完全听人的。
 _Avoid_: 自动模式、auto 模式
 
+### 模型访问与压缩
+
+**压缩权 (Compression Ownership)**:
+一个会话的上下文由哪一层负责折叠；同一时刻只有一个所有者，两层同时压缩等于同一轮压两次。
+_Avoid_: 压缩开关、压缩策略
+
+**压缩代理 (Compression Proxy)**:
+夹在客户端与模型上游之间、按 wire 协议改写请求流以折叠历史的一层；它不产生对话内容，只重写流量。
+_Avoid_: 代理层、中间件、缓冲层
+
+**Responses 接口面 (Responses API Surface)**:
+上游以 OpenAI Responses 协议暴露的访问面；只有实现该协议的 provider 层能用它，声明不了就换不了。
+_Avoid_: 新接口、v1/responses、兼容端点
+
 ### 仓库拓扑
 
 **子仓库 (Sub-repo)**:
