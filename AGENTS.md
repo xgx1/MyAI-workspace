@@ -1,6 +1,6 @@
 # AGENTS.md — MyAI 工作区本地约定
 
-通用的 DSH 规则（重启纪律、submodule 机制、技能软链/分组/平台约定、调用语法、GUI 窗口、代码检索）见用户级 `~/.dsh/AGENTS.md`。本文件只放**这个工作区特有**的路径与仓库事实。
+通用的 DSH 规则（重启纪律、submodule 机制、技能软链/分组/平台约定、调用语法、代码检索）见用户级 `~/.dsh/AGENTS.md`。本文件只放**这个工作区特有**的路径与仓库事实。
 
 ## 仓库布局
 
@@ -12,8 +12,8 @@
   - `~/.dsh-dev/settings.yaml` 与 `profiles/web/` 都是**快照副本**（不跟随生产）：同步生产 composition 用 `cp ~/.dsh/profiles/web/{cordis.patch.yml,package.json,pnpm-lock.yaml} ~/.dsh-dev/profiles/web/ && (cd ~/.dsh-dev/profiles/web && pnpm install --registry=https://registry.npmmirror.com --prefer-offline)`。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
-- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（各 2 个与 13 个，共 15 个）：
-  - `vendor/` = 第三方插件源码，均为生产 `link:` 目标。`dsh-genui` 直连上游（omdsh-dev）；`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）。
+- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-10-12 实测 `git submodule status`：vendor 3 个、skills 14 个，共 17 个）：
+  - `vendor/` = 第三方插件源码，均为生产 `link:` 目标。`dsh-genui` 直连上游（omdsh-dev）；`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）；`OpenViking`（xgx1 fork）供 `@openviking/dsh-memory-plugin`，dev 与生产 profile 都已 `link:`。
   - `skills/` = 技能分组仓，一个上游仓库一组。组树 = 上游树 + 本地改动移植。详见 `docs/adr/0006`。
   - 改它们要在**各自目录里**提交、推送，再回 `dsh-extensions` 更新指针；本仓只保存指针。两者都不被 `.gitignore` 忽略（见 `docs/adr/0005`）。
 - 位置纪律与动手前确认流程见用户级 `~/.dsh/AGENTS.md`「修改位置」节；本工作区先例复盘：`docs/plans/manager-task-orchestration.md`「经验教训」节。
@@ -34,7 +34,7 @@
 
 - **模型**：`convaiinnovations/laya`（421M，Apache-2.0，ModernBERT-large 编码器 + 决策头）。权重在 `~/.model/laya/hf`（用 `HF_HOME` 指过去，遵守「模型一律在 `~/.model`」的约定）；venv 在 `~/.local/share/laya/venv`（Python 3.12 + `torch 2.10.0+rocm7.0`，gfx1100 轮子）。
 - **侧车**：`laya-sidecar.service` = `laya-mcp serve --model english --port 8083`，启动脚本 `~/.local/share/laya/run-sidecar.sh`。实测 **18–24 ms/次**（3 问一次前向），空缓存冷启动 82 s、有缓存 9.4 s。
-- **显存**：english + multilingual 常驻约 **5.5 GB**。**与 Bonsai 2 27B（100K 上下文峰值 12.3 GB）无法同时驻留**，二选一：`systemctl --user stop laya-sidecar`。
+- **显存**：english + multilingual 常驻约 **5.5 GB**，目前**独占 GPU**——Bonsai 2 27B（100K 上下文峰值 12.3 GB）的权重 2026-10-12 已不在本机（`~/.model/` 只剩 `laya/`），`~/.dsh/settings.yaml` 里的 `local-bonsai` provider 是空壳。要两者并存得先重下权重，届时用 `systemctl --user stop laya-sidecar` 腾显存。
 - **DSH 侧**：npm 插件 `dsh-laya`（v0.1.4）装在 **dev home** 的 `web` 与 `headless` profile 里，`sidecarUrl` 必须在 patch 里覆盖成 `http://127.0.0.1:8083`（插件默认值 8787 是 headroom 的端口）。模型可见工具：`laya_ask`、`laya_plan`。注意：从 profile 目录跑 `node -e "import('dsh-laya')"` 会报 `Cannot find package '@deepseek-ai/dsh-tools'`，**那是误报**——harness 自己解析安装态的 `@deepseek-ai/*`；判据是会话里工具真的出现（headless 实测已出现）。
 - **自检**：`curl -s localhost:8083/health`（看 `degraded`）· `~/.local/share/laya/venv/bin/laya-mcp doctor`（先在 GPU 上真跑一个算子再下结论，别信 `torch.cuda.is_available()`）。
 - **两个坑**：① 侧车必须清 `*_proxy`——`all_proxy=socks5://` 会让 httpx 报 `socksio` 缺失直接拒启（脚本里已 `unset`）；② 上游 english 检查点自带非法温度，启动日志会警告 `Treat confidence from the affected entries as uncalibrated`。
@@ -52,9 +52,10 @@
 
 ## 技能部署
 
-- `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、`~/projects/*/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
+- `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、**任意深度项目下的** `<项目>/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
 - 源①的跳过规则：跳过 `tests/`/`fixtures/`/`examples/`/`sample*` 噪音并打印跳过清单；同名副本取路径最浅者，故 `skills/`、`.agents/skills/` 优先于分发副本。技能目录 = 含 `SKILL.md` 的目录，**不限深度**。
-- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。
+- 源③ 2026-10-12 起也是递归 `find`（旧版单层 `~/projects/*/.dsh/skills/` glob 会漏 `ps-tool/anim/.dsh/skills/` 这类嵌套项目，四个 anime 技能曾长期靠手工软链），并排除 `*/snapshots/*`（DSH 快照夹具里放的是测试用假技能）。
+- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时放进 `~/.dsh/skill-filter.yaml` 的 allow 面（该文件默认 `allow: "*"`，只需确认不在 deny 列表）并重启会话。
 
 ## 本工作区
 
