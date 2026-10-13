@@ -1,0 +1,95 @@
+# codebase-memory-mcp ignore list for the MyAI meta-repo.
+#
+# gitignore-style. cbm ALSO reads every .gitignore and unions the rules, so this
+# file only adds what .gitignore does not already cover.
+#
+# Goal (2026-10-13, after the auto_watch reindex runaway): keep the source the
+# agent actually searches — deepseek-harness/{packages,apps,scripts,docs} and
+# dsh-extensions/plugins — and drop vendored deps, third-party skill submodules,
+# design-note history, test snapshots, build output and media. That takes the
+# indexable set from ~18.7k files to ~2.7k.
+#
+# If you want a subtree back, delete its line; nothing here is load-bearing.
+# After editing, re-index with index_repository (auto_watch is off).
+
+# ── Dependencies and build output (any depth) ───────────────────────────────
+node_modules/
+lib/
+dist/
+build/
+out/
+target/
+.next/
+coverage/
+*.tsbuildinfo
+*.map
+*.min.js
+*.min.css
+
+# ── Git / tool / runtime state ──────────────────────────────────────────────
+.git/
+.zvec-grep/
+.playwright-mcp/
+.agent-teams/
+.scratch/
+.cache/
+*.log
+*.pid
+
+# ── deepseek-harness: history, snapshots, generated, non-TS surfaces ────────
+deepseek-harness/.agents/
+deepseek-harness/.claude/
+deepseek-harness/.dsh-build/
+deepseek-harness/snapshots/
+deepseek-harness/website/
+deepseek-harness/native/
+deepseek-harness/python/
+deepseek-harness/benchmarks/
+deepseek-harness-dev/
+
+# ── Documentation translations (duplicates of the English originals) ────────
+*.i18n.yaml
+*.zh.md
+*.zh-CN.md
+
+# ── dsh-extensions: vendored repos + third-party skill submodules ───────────
+dsh-extensions/vendor/
+dsh-extensions/skills/
+
+# ── Other top-level trees (not part of the harness) ────────────────────────
+modelscope-cli/
+old/
+
+# ── Media and archives (not searchable code) ───────────────────────────────
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.bmp
+*.svg
+*.pdf
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.eot
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.exe
+*.dll
+*.so
+*.dylib
+*.node
+*.wasm
+*.db
+*.sqlite
+*.sqlite3
