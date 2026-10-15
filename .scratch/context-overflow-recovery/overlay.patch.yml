@@ -1,0 +1,4 @@
+# A/B overlay: route the Messages adapter at the local fake.
+- id: llm-deepseek
+  config:
+    baseURL: 'http://127.0.0.1:18999'
