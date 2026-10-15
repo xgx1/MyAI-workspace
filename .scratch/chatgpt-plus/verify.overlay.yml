@@ -1,0 +1,18 @@
+# One-shot overlay: prove the ChatGPT Plus/Pro route end to end from the CLI,
+# without touching the web profile's own composition. Applied with
+#   dsh --profile headless --patch .scratch/chatgpt-plus/verify.overlay.yml "…"
+#
+# `openai-codex` is pi-ai's catalog provider (OAuth "OpenAI (ChatGPT Plus/Pro)",
+# baseUrl https://chatgpt.com/backend-api). The profile names no apiKeyEnv on
+# purpose: llm-pi-ai reuses the catalog provider's own OAuth auth only for a
+# keyless route, reading the grant from $DSH_HOME/.credentials.yaml.
+- id: llm-pi-ai
+  config:
+    providers:
+      openai-codex: {}
+
+- id: agent-default-model
+  config:
+    provider: openai-codex
+    model: gpt-6-sol
+    reasoningEffort: high
