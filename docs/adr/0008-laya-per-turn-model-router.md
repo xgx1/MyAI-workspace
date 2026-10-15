@@ -33,3 +33,16 @@
 - 任何情况下 `auto` 都必须解析成真实模型：`live` 用 Laya 的选择，`off` / `shadow` 用静态默认档（`unlabeledRoute`）。占位适配器的 `stream()` 只有在插件根本没挂载时才会被触达，届时 loud 失败并说明原因。
 - `auto` 会话不写 `model/selection`——选择器继续显示 `auto`（那正是它作出的长期选择）；每轮真实模型留在 `[model routed: …]` 通知与 `request/header` 里。
 - 旧语义保留为 `applyWhen: always`（`live` 时路由所有会话）。
+
+## 修订二：`auto` 必须按 step 解析（2026-09-27 追加，修线上失败）
+
+线上实测：用户选中 `auto` 后，一轮里第一个 step 正常（改写生效），**第二个 step 起请求头落成 `auto/auto` 并撞上占位适配器，整轮失败**。
+
+根因：harness 只在写出的 `request/header` 与用户选择**完全一致**时才把它标记为已消费（`consumeSelection`，由 session-controller 在每次 `request/header` 事件上调用）。路由把 `auto` 换成真实模型，这条选择就永远不会被消费，于是 harness 在**每一个 step** 重新应用它；而初版只在 `step === 1` 改写。
+
+修法与配套：
+- `auto` 按 step 解析：首步用本轮决策（`live` 用 Laya 的选择，否则静态默认档），后续步沿用本轮已在跑的路由——不中途换模型（换模型会分裂 KV 缓存 epoch）。
+- 加一条「本 Agent 本轮在 auto 上」的标记，这样即使那条选择日后被消费掉、请求头不再是 `auto`，路由也不会静默停止。
+- 占位适配器不再硬失败，而是**委派到静态默认档**（`ctx.llm.stream` 到真实路由）；只有在 `unlabeledRoute` 为 `null`（无处可去）时才 loud 失败。这样任何绕过路由的调用（标题、摘要）都不会再打死一轮。
+
+已知代价：harness 的 `[model changed: … continues with auto/auto]` 通知会在**每个 step** 出现，且它是假的（真正服务的是路由结果）。它来自 harness 对「会话选择 vs 上一个请求头」的比较，而那个选择是 session-controller 的私有 ref（`selectForNextRequest` 不是服务），插件改不了。当前用我们自己的通知文案把这件事说清楚；彻底消除需要「切换后第一轮先落一个 `auto/auto` 请求头把选择消费掉」，代价是那一轮请求头不准确，暂不做。
