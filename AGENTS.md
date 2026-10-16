@@ -34,7 +34,7 @@
 
 - **模型**：`convaiinnovations/laya`（421M，Apache-2.0，ModernBERT-large 编码器 + 决策头）。权重在 `~/.model/laya/hf`（用 `HF_HOME` 指过去，遵守「模型一律在 `~/.model`」的约定）；venv 在 `~/.local/share/laya/venv`（Python 3.12 + `torch 2.10.0+rocm7.0`，gfx1100 轮子）。
 - **侧车**：`laya-sidecar.service` = `laya-mcp serve --model english --port 8083`，启动脚本 `~/.local/share/laya/run-sidecar.sh`。实测 **18–24 ms/次**（3 问一次前向），空缓存冷启动 82 s、有缓存 9.4 s。
-- **显存**：english + multilingual 常驻约 **5.5 GB**，目前**独占 GPU**（本机已无其他本地模型服务，Bonsai 2 27B 于 2026-10-15 弃用且配置已清）。要跑别的本地模型得先 `systemctl --user stop laya-sidecar` 腾显存。
+- **显存**：english + multilingual 常驻约 **5.5 GB**，目前**独占 GPU**（本机已无其他本地模型服务；原先的本地 27B 模型 2026-10-15 弃用且配置已清）。要跑别的本地模型得先 `systemctl --user stop laya-sidecar` 腾显存。
 - **DSH 侧**：npm 插件 `dsh-laya`（v0.1.4）装在 **dev home** 的 `web` 与 `headless` profile 里，`sidecarUrl` 必须在 patch 里覆盖成 `http://127.0.0.1:8083`（插件默认值 8787 是 headroom 的端口）。模型可见工具：`laya_ask`、`laya_plan`。注意：从 profile 目录跑 `node -e "import('dsh-laya')"` 会报 `Cannot find package '@deepseek-ai/dsh-tools'`，**那是误报**——harness 自己解析安装态的 `@deepseek-ai/*`；判据是会话里工具真的出现（headless 实测已出现）。
 - **自检**：`curl -s localhost:8083/health`（看 `degraded`）· `~/.local/share/laya/venv/bin/laya-mcp doctor`（先在 GPU 上真跑一个算子再下结论，别信 `torch.cuda.is_available()`）。
 - **两个坑**：① 侧车必须清 `*_proxy`——`all_proxy=socks5://` 会让 httpx 报 `socksio` 缺失直接拒启（脚本里已 `unset`）；② 上游 english 检查点自带非法温度，启动日志会警告 `Treat confidence from the affected entries as uncalibrated`。
