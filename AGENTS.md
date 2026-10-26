@@ -12,7 +12,7 @@
   - `~/.dsh-dev/settings.yaml` 与 `profiles/web/` 都是**快照副本**（不跟随生产）：同步生产 composition 用 `cp ~/.dsh/profiles/web/{cordis.patch.yml,package.json,pnpm-lock.yaml} ~/.dsh-dev/profiles/web/ && (cd ~/.dsh-dev/profiles/web && pnpm install --registry=https://registry.npmmirror.com --prefer-offline)`。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
-- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-10-12 实测 `git submodule status`：vendor 3 个、skills 14 个，共 17 个）：
+- **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-10-26 实测 `git submodule status`：vendor 7 个、skills 14 个，共 21 个；clawic-marketplace 与 caveman 两组已于同日删除）：
   - `vendor/` = 第三方插件源码，均为生产 `link:` 目标。`dsh-genui` 直连上游（omdsh-dev）；`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）；`OpenViking`（xgx1 fork）供 `@openviking/dsh-memory-plugin`，dev 与生产 profile 都已 `link:`；`dsh-ops`（xgx1 fork，upstream T-Auto/dsh-ops）供 dsh 的 bash/PowerShell 7 与 Rust file/PTC 工具，上游 0.3.0 只有 Windows x64，fork main 上做了 Linux 移植（放开平台门 + 修 Linux `O_PATH` 目录 `fsync` 的 `EBADF`），改动清单在该仓 `LOCAL-PATCHES.md`；Linux 上四个组件都开：`shell` 与 `background` 都配 `bashPath: /usr/bin/bash`（`allowSystemShellFallback` 被上游 config update 1 强制改回 `false`，不能当开关），`background` 的 FastCtx 由 `node bin/dsh-ops.mjs build --force` 在该子模块里就地构建。
   - `skills/` = 技能分组仓，一个上游仓库一组。组树 = 上游树 + 本地改动移植。详见 `docs/adr/0006`。
   - 改它们要在**各自目录里**提交、推送，再回 `dsh-extensions` 更新指针；本仓只保存指针。两者都不被 `.gitignore` 忽略（见 `docs/adr/0005`）。
@@ -55,7 +55,7 @@
 - `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、**任意深度项目下的** `<项目>/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
 - 源①的跳过规则：跳过 `tests/`/`fixtures/`/`examples/`/`sample*` 噪音并打印跳过清单；同名副本取路径最浅者，故 `skills/`、`.agents/skills/` 优先于分发副本。技能目录 = 含 `SKILL.md` 的目录，**不限深度**。
 - 源③ 2026-10-12 起也是递归 `find`（旧版单层 `~/projects/*/.dsh/skills/` glob 会漏 `ps-tool/anim/.dsh/skills/` 这类嵌套项目，四个 anime 技能曾长期靠手工软链），并排除 `*/snapshots/*`（DSH 快照夹具里放的是测试用假技能）。
-- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时放进 `~/.dsh/skill-filter.yaml` 的 allow 面（该文件默认 `allow: "*"`，只需确认不在 deny 列表）并重启会话。
+- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时把名字加进 `~/.dsh/skill-filter.yaml` 的 allow 面（2026-10-26 起该文件是**白名单制**：只有列名的技能进模型 catalog，公共技能默认禁；项目级 `MyAI/.dsh/skill-filter.yaml` 同规则、优先级更高）并重启会话。
 
 ## 本工作区
 
