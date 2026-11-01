@@ -9,7 +9,7 @@
   - `dsh-web-dev.service` → **http://127.0.0.1:3081**，`DSH_HOME=~/.dsh-dev`（sessions/storages 与生产隔离）；启动脚本 `~/.dsh-dev/dsh-web-dev-launch.sh`，unit 权威副本 `~/.dsh/deploy/systemd-user/dsh-web-dev.service`。
   - composition 副本在 `~/.dsh-dev/profiles/web/`：**要调开发实例的组成就改这份**，别改生产的 `~/.dsh/profiles/web/`。
   - 开发循环：worktree 里改代码 → `pnpm run build` → `systemctl --user restart dsh-web-dev.service` → 刷新 3081。
-  - `~/.dsh-dev/settings.yaml` 与 `profiles/web/` 都是**快照副本**（不跟随生产）：同步生产 composition 用 `cp ~/.dsh/profiles/web/{cordis.patch.yml,package.json,pnpm-lock.yaml} ~/.dsh-dev/profiles/web/ && (cd ~/.dsh-dev/profiles/web && pnpm install --registry=https://registry.npmmirror.com --prefer-offline)`。
+  - **`~/.dsh-dev` 是 `~/.dsh`（dsh-home 仓）的 git worktree**（orphan 分支 `dev`，2026-11-02 起，已推 origin）：只跟踪开发实例配置层——`profiles/web/*`、`profiles/headless/*`、`dsh-web-dev-launch.sh`、`skill-filter.yaml`；`sessions/`、`storages/`、`.credentials.yaml`、`node_modules/` 与三个指向生产的软链（`.agent-presets`、`AGENTS.md`、`skills`）由 worktree 里的 `.gitignore` 排除。composition 仍是**不跟随生产的快照**：同步生产用 `cp ~/.dsh/profiles/web/{cordis.patch.yml,package.json,pnpm-lock.yaml} ~/.dsh-dev/profiles/web/ && (cd ~/.dsh-dev/profiles/web && pnpm install --registry=https://registry.npmmirror.com --prefer-offline)`，之后在 `~/.dsh-dev` 里 `git commit` 落 dev 分支。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
 - **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-11-01 实测 `git submodule status`：vendor 6 个、skills 14 个，共 20 个；clawic-marketplace 与 caveman 两组已于 2026-10-26 删除，vendor/dsh-genui 于 2026-11-01 移除）：
