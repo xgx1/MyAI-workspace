@@ -1,5 +1,5 @@
 # MyAI (DSH development) project skill filter config
-# 白名单制：仅自研/在用的技能对模型可见；公共技能默认禁（/name 仍可手动调用）。
+# 白名单制：仅自研/在用的技能对模型可见；公共技能默认禁——不允许的技能既不能 /name 调用，也不会注入上下文。
 # 自研：self-dsh / self-ops / self-ue（dsh-extensions 子模块）+ update-all（update-app）
 # 在用的上游：rea（REA 基础设施）、dietrichgebert-ponytail（常驻 persona，钩子注入）
 # 2026-10-26：clawic-marketplace 与 caveman 组已整组删除；如 ponytail/rea 也要禁，从 allow 去掉即可。
@@ -98,17 +98,17 @@ allow:
   - "unreal-official-mcp-surgery"
   - "unreal-python"
   - "unreal-uasset-ref-scan"
-  - "unreal-umg-binding
-"
   - "unreal-umg-bindwidget-default"
-  - "unreal-umg-input
-"
+  - "unreal-umg-binding"
+  - "unreal-umg-input"
+
   - "unreal-umg-item-button-wiring"
+
   - "unreal-umg-lifecycle"
-  - "unreal-umg-lists
-"
-  - "unreal-umg-mvvm
-"
+  - "unreal-umg-lists"
+  - "unreal-umg-mvvm"
+
+
   - "unreal-vr-button-click-fix"
   - "unreal-vr-dialog-world-mounting"
   - "unreal-vr-mouse-debug-click"
