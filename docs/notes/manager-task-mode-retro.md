@@ -37,6 +37,7 @@ status: 已完成（未合并、未人工验收）
 
 - [ADR-0011 任务清单降为视图](../adr/0011-manager-task-list-as-view.md)
 - [ADR-0012 提问非阻塞](../adr/0012-non-blocking-questions.md)
+- [ADR-0013 提问只出现在任务卡片上](../adr/0013-questions-live-on-the-task-card.md)
 - [功能文档](../functional/manager-task-mode.md)
 - [实施计划](../plans/manager-task-list-view.md)
 - [人工测试](../manual-tests/manager-task-mode.md)
