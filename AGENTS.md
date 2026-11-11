@@ -30,6 +30,22 @@
 - 验证开发改动一律走 dev 实例 3081；**不要**拿 3080 当试验台，也不要用重启 `dsh-web.service` 的方式看效果（会中断当前对话）。
 - 真正会影响生产的动作（重启 `dsh-web.service`、改 `~/.dsh` 的生产 composition 或 unit、动 `dsh-extensions` 里被生产 `link:` 的目录）**先问用户**。
 
+## DSH home 仓库（`~/.dsh` = `xgx1/dsh-home`）
+
+`~/.dsh` **本身就是 git 仓库**（公开：<https://github.com/xgx1/dsh-home>），只跟踪配置层。
+**不要另建一份 `.dsh`**：新设备、新工作区、别的 agent 一律 clone 这份仓库（或把 `DSH_HOME` 指向
+clone 出来的目录）；手工拷配置、自己建空 home、拿别的目录当 home 都会与主库漂移，合并时丢凭据引用与
+session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用技能，**不是** home。
+
+分支约定（完整命令见 `~/.dsh/README.md`「多机：分支约定」）：
+
+1. **强制更新 / 跨机同步一律 Linux → Windows**：先 `git checkout main && git pull`，再
+   `git checkout windows && git merge main`。Linux（Arch）是 `main` 的唯一推进方。
+2. **Windows 侧改动必须回流 `main`**：windows 分支提交并推送后，
+   `git checkout main && git merge --no-ff windows && git push`。只有「换平台就该不一样」的
+   （PowerShell 启动器、`link:` 绝对路径、lock、按平台切换的工具行）才留在 `windows`；
+   跨平台解析、hook 分发器、文档修正这类通用改动直接进 `main`，否则下次合并会当冲突。
+
 ## 本地 Laya 决策模型（dev 侧，2026-09-27 接入）
 
 给 agent 补「快判断」能力：state + 类型化问题（`noul` 是/否、`choice` 选一、`score` 打分）→ 一次前向返回校准概率，不生成文本。
