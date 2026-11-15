@@ -1,0 +1,9 @@
+{"name": "00_preflight_both_input_paths", "status": "PASS", "detail": {"niri_focus": 5, "core_focus": 6291459, "human_typing": true, "mpx_typing": true}, "seconds": 5.983}
+{"name": "12_unknown_target_fails_closed", "status": "PASS", "detail": {"valid": "Handled", "unknown": {"Err": "scoped target: no window with id 99999"}, "satellite_x11_target": {"Ok": "Handled"}, "cleared": "Handled"}, "seconds": 11.927}
+{"name": "13_rejected_target_keeps_previous_pin", "status": "PASS", "detail": {"still_targets_native": true, "text": "a"}, "seconds": 7.027}
+{"name": "05_MPX_text_into_unfocused_X11_keeps_human_focus", "status": "PASS", "detail": {"agent": "mpxonly", "human_unchanged": true}, "seconds": 2.975}
+{"name": "10_interleaved_core_and_MPX_X11_isolation", "status": "PASS", "detail": {"agent": "aaaaaaaa", "human": "hhhhhhhh"}, "seconds": 4.0}
+{"name": "14_MPX_click_into_X11_without_moving_human_pointer", "status": "PASS", "detail": {"clicks": 1, "core_pointer_unchanged": true}, "seconds": 0.034}
+{"name": "15_XSendEvent_is_not_a_delivery_path", "status": "LIMITATION", "error": "XSendEvent typed ''", "seconds": 1.601}
+{"name": "16_hover_does_not_take_focus", "status": "PASS", "detail": {"focus_before": 2, "focus_after": 2, "hovered_window": 3}, "seconds": 25.365}
+SUMMARY {"PASS": 7, "FAIL": 0, "LIMITATION": 1}

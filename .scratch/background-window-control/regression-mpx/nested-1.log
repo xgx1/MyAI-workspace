@@ -1,0 +1,10 @@
+2026-11-06T07:06:25.607414Z  INFO niri: starting version 26.04 (v26.04-10-g0647becb-modified)
+2026-11-06T07:06:25.608963Z DEBUG niri_config: loaded config from "/home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/mpx.kdl"
+2026-11-06T07:06:25.683353Z DEBUG niri::niri: putting output winit at x=0 y=0
+2026-11-06T07:06:25.683520Z  INFO niri: listening on Wayland socket: wayland-3
+2026-11-06T07:06:25.683535Z  INFO niri: IPC listening on: /run/user/1000/niri.wayland-3.408970.sock
+2026-11-06T07:06:25.686352Z  INFO niri: listening on X11 socket: :9
+2026-11-06T07:06:25.698130Z DEBUG niri::utils::xwayland::satellite: connection to X11 abstract socket; spawning xwayland-satellite
+2026-11-06T07:06:26.703257Z  INFO niri::utils::signals::platform: quitting due to receiving signal SIGTERM
+2026-11-06T07:06:27.712682Z DEBUG niri::utils::watcher: exiting watcher thread for Explicit("/home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/mpx.kdl")
+2026-11-06T07:06:27.714237Z  WARN niri::utils::xwayland::satellite: xwayland-satellite exited with: exit status: 101

@@ -1,0 +1,29 @@
+[
+  {
+    "iteration": 1,
+    "pid": 408970,
+    "display": ":9",
+    "ipc": "/run/user/1000/niri.wayland-3.408970.sock",
+    "selftest_rc": 0,
+    "niri_exit": 0,
+    "reaped": true
+  },
+  {
+    "iteration": 2,
+    "pid": 409101,
+    "display": ":9",
+    "ipc": "/run/user/1000/niri.wayland-3.409101.sock",
+    "selftest_rc": 0,
+    "niri_exit": 0,
+    "reaped": true
+  },
+  {
+    "iteration": 3,
+    "pid": 409283,
+    "display": ":9",
+    "ipc": "/run/user/1000/niri.wayland-3.409283.sock",
+    "selftest_rc": 0,
+    "niri_exit": 0,
+    "reaped": true
+  }
+]

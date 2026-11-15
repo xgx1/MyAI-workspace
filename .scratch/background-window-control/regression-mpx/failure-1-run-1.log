@@ -1,0 +1,30 @@
+PASS argc==3
+PASS n>0 && !*end
+PASS owned && strspn(owned,"0123456789")==strlen(owned)
+PASS f
+PASS fread(cmdline,1,sizeof cmdline-1,f)>0
+PASS !strcmp(base,"Xvfb")
+ENV DISPLAY=:4 WAYLAND_DISPLAY= own_Xvfb_pid=512447
+PASS d&&h&&a
+PASS XIQueryVersion(d,&major,&minor)==Success
+SERVER vendor=The X.Org Foundation XI=2.0
+PASS info
+PASS id
+PASS info
+PASS id
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&add,1)==Success
+PASS info
+PASS id
+PASS info
+PASS id
+PASS info
+PASS id
+PASS info
+PASS id
+DEVICES core_pointer=2 core_keyboard=3 agent_pointer=8 agent_keyboard=9 agent_xtest_keyboard=11 agent_xtest_pointer=10
+PASS XISetClientPointer(h,hw,cp)==Success
+PASS XISetClientPointer(a,aw,ap)==Success
+PASS XISetFocus(d,ck,hw,CurrentTime)==Success
+PASS XISetFocus(d,ak,aw,CurrentTime)==Success
+PASS XIGetClientPointer(d,hw,&got)&&got==cp
+FAIL line 95: XIGetClientPointer(d,aw,&got)&&got==ap

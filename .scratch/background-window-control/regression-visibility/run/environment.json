@@ -1,0 +1,12 @@
+{
+  "display": ":9",
+  "wayland": "wayland-3",
+  "ipc": "/run/user/1000/niri.wayland-3.461165.sock",
+  "runtime": "/run/user/1000",
+  "parent_wayland": "wayland-1",
+  "parent_window": 80,
+  "park_workspace": "ue",
+  "pids": {
+    "niri": 461165
+  }
+}

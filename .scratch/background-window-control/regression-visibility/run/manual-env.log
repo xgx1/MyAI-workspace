@@ -1,0 +1,2 @@
+READY {"display": ":9", "wayland": "wayland-3", "ipc": "/run/user/1000/niri.wayland-3.453163.sock", "runtime": "/run/user/1000", "parent_wayland": "wayland-1", "parent_window": 78, "park_workspace": "ue", "pids": {"niri": 453163}}
+CLEANED

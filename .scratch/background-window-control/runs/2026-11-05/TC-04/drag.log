@@ -1,0 +1,2 @@
+motion_absolute x=500 y=500 of 1000 sent on seat agent-0
+drag (500,500) -> (800,500) in 10 steps sent on seat agent-0

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "01_environment_alive",
+    "status": "PASS",
+    "detail": {
+      "focus": 2,
+      "agent_x11": 3,
+      "workspace": 2
+    },
+    "seconds": 0.004
+  },
+  {
+    "name": "02_show_original_window_without_focus",
+    "status": "PASS",
+    "detail": {
+      "window": 3,
+      "focus_after": 2,
+      "floating": true
+    },
+    "seconds": 8.88
+  },
+  {
+    "name": "03_unknown_target_fails_closed",
+    "status": "PASS",
+    "detail": {
+      "exit": 1,
+      "stderr": "error: scoped target: no window with id 99999"
+    },
+    "seconds": 0.002
+  },
+  {
+    "name": "04_scoped_keyboard_into_pinned_window",
+    "status": "PASS",
+    "detail": {
+      "agent_text": "a",
+      "human_text": ""
+    },
+    "seconds": 13.022
+  },
+  {
+    "name": "05_scoped_screenshot",
+    "status": "PASS",
+    "detail": {
+      "png_bytes": 11529,
+      "focus": 3
+    },
+    "seconds": 1.038
+  },
+  {
+    "name": "06_release_scoped_target",
+    "status": "PASS",
+    "detail": {
+      "stdout": "handled target=None",
+      "focus": 3
+    },
+    "seconds": 0.002
+  }
+]

@@ -212,7 +212,7 @@ for p in "$EXT"/plugins/*/; do (cd "$p" && pnpm install && pnpm run build); done
 ```
 
 **验收**：以下路径全部存在——
-`$EXT/plugins/{dsh-laya-router,dsh-llm-retry-schedule,dsh-sidebar-taskbar,dsh-task-manager}/lib/index.js`、
+`$EXT/plugins/{dsh-llm-retry-schedule,dsh-sidebar-taskbar,dsh-task-manager}/lib/index.js`、
 `$EXT/vendor/dsh-genui/lib/index.js`、`$EXT/vendor/billion-context/dist/index.js`（这个仓产物在 `dist/`）。
 
 ### 2.5 装 update-app（update-all 的 CLI）

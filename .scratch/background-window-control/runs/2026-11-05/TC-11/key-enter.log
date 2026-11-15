@@ -1,0 +1,3 @@
+motion_absolute x=28 y=500 of 1000 sent on seat agent-0
+compositor keymap: 35758 bytes
+key 28 press+release sent on the seat's virtual keyboard

@@ -1,0 +1,2 @@
+
+(zenity:1301318): Gdk-WARNING **: 22:47:48.570: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)

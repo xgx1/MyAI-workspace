@@ -1,0 +1,29 @@
+ 2026-11-05T14:46:58.737Z INFO  xwayland_satellite > Starting xwayland-satellite version 0.8.3
+ 2026-11-05T14:46:58.745Z INFO  xwayland_process   > _XSERVTransSocketUNIXCreateListener: ...SocketCreateListener() failed
+ 2026-11-05T14:46:58.745Z INFO  xwayland_process   > _XSERVTransMakeAllCOTSServerListeners: server already running
+ 2026-11-05T14:46:58.745Z INFO  xwayland_process   > _XSERVTransSocketUNIXCreateListener: ...SocketCreateListener() failed
+ 2026-11-05T14:46:58.745Z INFO  xwayland_process   > _XSERVTransMakeAllCOTSServerListeners: server already running
+ 2026-11-05T14:46:58.761Z INFO  xwayland_process   > Xwayland glamor: GBM Wayland interfaces not available
+ 2026-11-05T14:46:58.761Z INFO  xwayland_process   > Failed to initialize glamor, falling back to sw
+ 2026-11-05T14:46:58.764Z INFO  xwayland_process   > MESA-LOADER: failed to open drm: /usr/lib/gbm/drm_gbm.so: cannot open shared object file: No such file or directory (search paths /usr/lib/gbm, suffix _gbm)
+ 2026-11-05T14:46:58.770Z INFO  xwayland_process   > _amdgpu_device_initialize: amdgpu_query_info(ACCEL_WORKING) failed (-13)
+ 2026-11-05T14:46:58.814Z INFO  xwayland_satellite::xstate > xfixes version: 1.0
+ 2026-11-05T14:46:58.814Z INFO  xwayland_satellite         > Connected to Xwayland on :2
+ 2026-11-05T14:46:58.814Z INFO  xwayland_satellite         > Successfully notified systemd of ready state.
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > The XKEYBOARD keymap compiler (xkbcomp) reports:
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > > Warning:          Unsupported maximum keycode 709, clipping.
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > >                   X11 cannot support keycodes above 255.
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > > Warning:          Virtual modifier Hyper multiply defined
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > >                   Using 0, ignoring 0
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > > Warning:          Virtual modifier ScrollLock multiply defined
+ 2026-11-05T14:46:58.819Z INFO  xwayland_process           > >                   Using 0, ignoring 0
+ 2026-11-05T14:46:58.820Z INFO  xwayland_process           > Errors from xkbcomp are not fatal to the X server
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > The XKEYBOARD keymap compiler (xkbcomp) reports:
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > > Warning:          Unsupported maximum keycode 709, clipping.
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > >                   X11 cannot support keycodes above 255.
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > > Warning:          Virtual modifier Hyper multiply defined
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > >                   Using 0, ignoring 0
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > > Warning:          Virtual modifier ScrollLock multiply defined
+ 2026-11-05T14:46:58.824Z INFO  xwayland_process           > >                   Using 0, ignoring 0
+ 2026-11-05T14:46:58.825Z INFO  xwayland_process           > Errors from xkbcomp are not fatal to the X server
+ 2026-11-05T14:47:04.335Z WARN  xwayland_satellite::server > No last focused toplevel, cannot focus window Window { res_id: 4194340 }

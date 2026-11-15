@@ -1,0 +1,1 @@
+{"id":2,"title":"agent-entry","app_id":"zenity","pid":3614033,"workspace_id":1,"is_focused":true,"is_floating":true,"is_urgent":false,"layout":{"pos_in_scrolling_layout":null,"tile_size":[300.0,251.0],"window_size":[300,251],"tile_pos_in_workspace_view":[485.0,560.0],"window_offset_in_tile":[0.0,0.0]},"focus_timestamp":{"secs":61934,"nanos":893640507}}

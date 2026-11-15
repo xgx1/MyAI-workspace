@@ -1,0 +1,5 @@
+seats=["winit", "agent-0"]
+enter seat=agent-0 x=19.2 y=150.0
+motion seat=agent-0 x=18.8 y=150.0
+key seat=agent-0 code=48 state=Pressed
+key seat=agent-0 code=48 state=Released

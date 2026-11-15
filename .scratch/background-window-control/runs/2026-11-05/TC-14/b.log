@@ -1,0 +1,11 @@
+seats=["winit", "agent-0"]
+key seat=winit code=48 state=Pressed
+key seat=winit code=48 state=Released
+key seat=winit code=48 state=Pressed
+key seat=winit code=48 state=Released
+key seat=winit code=48 state=Pressed
+key seat=winit code=48 state=Released
+key seat=winit code=48 state=Pressed
+key seat=winit code=48 state=Released
+key seat=winit code=48 state=Pressed
+key seat=winit code=48 state=Released

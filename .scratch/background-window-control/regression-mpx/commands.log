@@ -1,0 +1,250 @@
+$ cc -std=c11 -Wall -Wextra -Werror -O2 xi2-tool.c -o xi2-tool -lXi -lX11
+EXIT 0
+$ cc -std=c11 -Wall -Wextra -Werror -O2 satellite-check.c -o satellite-check -lXi -lX11
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :0 query
+REFUSED: explicit local nonzero display required; never :0
+EXIT 2
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :0.0 query
+REFUSED: explicit local nonzero display required; never :0
+EXIT 2
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :00 query
+REFUSED: explicit local nonzero display required; never :0
+EXIT 2
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display localhost:0 query
+REFUSED: explicit local nonzero display required; never :0
+EXIT 2
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :garbage query
+REFUSED: explicit local nonzero display required; never :0
+EXIT 2
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool
+usage: xi2-tool --display :NONZERO query | create mpx-NAME | cp WINDOW POINTER | focus WINDOW KEYBOARD | remove MPX_POINTER
+EXIT 2
+ENV DISPLAY=:9 WAYLAND_DISPLAY=<production> OWN_NIRI_PID=408970
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 query
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+caller_client_pointer=0 explicitly_set=0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=query
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 create mpx-helper
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+device=15 use=1 attachment=16 enabled=1 focus=0x0 name=mpx-helper pointer
+device=16 use=2 attachment=15 enabled=1 focus=0x1 name=mpx-helper keyboard
+device=17 use=3 attachment=15 enabled=1 focus=0x0 name=mpx-helper XTEST pointer
+device=18 use=4 attachment=16 enabled=1 focus=0x0 name=mpx-helper XTEST keyboard
+caller_client_pointer=2 explicitly_set=1
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=create
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 remove 15
+XI=2.0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=remove
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/satellite-check :9
+PASS argc==2
+PASS n>0 && !*end
+PASS owned && strspn(owned,"0123456789")==strlen(owned)
+PASS d
+PASS XIQueryVersion(d,&major,&minor)==Success
+SERVER vendor=The X.Org Foundation XI=2.0
+PASS info
+PASS id
+PASS info
+PASS id
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&add,1)==Success
+PASS info
+PASS id
+PASS info
+PASS id
+DEVICES core_pointer=2 core_keyboard=3 agent_pointer=15 agent_keyboard=16
+PASS XISetClientPointer(d,hw,cp)==Success
+PASS XISetClientPointer(d,aw,ap)==Success
+PASS XISetFocus(d,ck,hw,CurrentTime)==Success
+PASS XISetFocus(d,ak,aw,CurrentTime)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS focus_of(d,ck)==hw && focus_of(d,ak)==aw
+MEASURED XIWarpPointer core=BadMatch master=BadMatch (Xwayland/satellite 语义；指针与投递由 regression suite 的 XI2 注入路线覆盖)
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&rm,1)==Success
+PASS info
+PASS gone
+RESULT PASS: satellite X server isolates per-master focus; pointer warp/key delivery are measured (compositor-gated), and the human/agent key isolation itself is covered by regression suite 10 through XI2 focus injection
+EXIT 0
+CLEANUP exact_pid=408970 exit=0 reaped=True
+ENV DISPLAY=:9 WAYLAND_DISPLAY=<production> OWN_NIRI_PID=409101
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 query
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+caller_client_pointer=0 explicitly_set=0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=query
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 create mpx-helper
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+device=15 use=1 attachment=16 enabled=1 focus=0x0 name=mpx-helper pointer
+device=16 use=2 attachment=15 enabled=1 focus=0x1 name=mpx-helper keyboard
+device=17 use=3 attachment=15 enabled=1 focus=0x0 name=mpx-helper XTEST pointer
+device=18 use=4 attachment=16 enabled=1 focus=0x0 name=mpx-helper XTEST keyboard
+caller_client_pointer=2 explicitly_set=1
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=create
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 remove 15
+XI=2.0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=remove
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/satellite-check :9
+PASS argc==2
+PASS n>0 && !*end
+PASS owned && strspn(owned,"0123456789")==strlen(owned)
+PASS d
+PASS XIQueryVersion(d,&major,&minor)==Success
+SERVER vendor=The X.Org Foundation XI=2.0
+PASS info
+PASS id
+PASS info
+PASS id
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&add,1)==Success
+PASS info
+PASS id
+PASS info
+PASS id
+DEVICES core_pointer=2 core_keyboard=3 agent_pointer=15 agent_keyboard=16
+PASS XISetClientPointer(d,hw,cp)==Success
+PASS XISetClientPointer(d,aw,ap)==Success
+PASS XISetFocus(d,ck,hw,CurrentTime)==Success
+PASS XISetFocus(d,ak,aw,CurrentTime)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS focus_of(d,ck)==hw && focus_of(d,ak)==aw
+MEASURED XIWarpPointer core=BadMatch master=BadMatch (Xwayland/satellite 语义；指针与投递由 regression suite 的 XI2 注入路线覆盖)
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&rm,1)==Success
+PASS info
+PASS gone
+RESULT PASS: satellite X server isolates per-master focus; pointer warp/key delivery are measured (compositor-gated), and the human/agent key isolation itself is covered by regression suite 10 through XI2 focus injection
+EXIT 0
+CLEANUP exact_pid=409101 exit=0 reaped=True
+ENV DISPLAY=:9 WAYLAND_DISPLAY=<production> OWN_NIRI_PID=409283
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 query
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+caller_client_pointer=0 explicitly_set=0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=query
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 create mpx-helper
+XI=2.0
+device=2 use=1 attachment=3 enabled=1 focus=0x0 name=Virtual core pointer
+device=3 use=2 attachment=2 enabled=1 focus=0x1 name=Virtual core keyboard
+device=4 use=3 attachment=2 enabled=1 focus=0x0 name=Virtual core XTEST pointer
+device=5 use=4 attachment=3 enabled=1 focus=0x0 name=Virtual core XTEST keyboard
+device=6 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:8
+device=7 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:8
+device=8 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:8
+device=9 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:8
+device=10 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-touch:8
+device=11 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer:9
+device=12 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-relative-pointer:9
+device=13 use=3 attachment=2 enabled=1 focus=0x0 name=xwayland-pointer-gestures:9
+device=14 use=4 attachment=3 enabled=1 focus=0x0 name=xwayland-keyboard:9
+device=15 use=1 attachment=16 enabled=1 focus=0x0 name=mpx-helper pointer
+device=16 use=2 attachment=15 enabled=1 focus=0x1 name=mpx-helper keyboard
+device=17 use=3 attachment=15 enabled=1 focus=0x0 name=mpx-helper XTEST pointer
+device=18 use=4 attachment=16 enabled=1 focus=0x0 name=mpx-helper XTEST keyboard
+caller_client_pointer=2 explicitly_set=1
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=create
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/xi2-tool --display :9 remove 15
+XI=2.0
+target_DISPLAY=:9 env_DISPLAY=:9 WAYLAND_DISPLAY= action=remove
+EXIT 0
+$ /home/sx/projects/MyAI/.scratch/background-window-control/regression-mpx/satellite-check :9
+PASS argc==2
+PASS n>0 && !*end
+PASS owned && strspn(owned,"0123456789")==strlen(owned)
+PASS d
+PASS XIQueryVersion(d,&major,&minor)==Success
+SERVER vendor=The X.Org Foundation XI=2.0
+PASS info
+PASS id
+PASS info
+PASS id
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&add,1)==Success
+PASS info
+PASS id
+PASS info
+PASS id
+DEVICES core_pointer=2 core_keyboard=3 agent_pointer=15 agent_keyboard=16
+PASS XISetClientPointer(d,hw,cp)==Success
+PASS XISetClientPointer(d,aw,ap)==Success
+PASS XISetFocus(d,ck,hw,CurrentTime)==Success
+PASS XISetFocus(d,ak,aw,CurrentTime)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS focus_of(d,ck)==hw && focus_of(d,ak)==aw
+MEASURED XIWarpPointer core=BadMatch master=BadMatch (Xwayland/satellite 语义；指针与投递由 regression suite 的 XI2 注入路线覆盖)
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&rm,1)==Success
+PASS info
+PASS gone
+RESULT PASS: satellite X server isolates per-master focus; pointer warp/key delivery are measured (compositor-gated), and the human/agent key isolation itself is covered by regression suite 10 through XI2 focus injection
+EXIT 0
+CLEANUP exact_pid=409283 exit=0 reaped=True

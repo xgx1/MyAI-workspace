@@ -1,0 +1,443 @@
+[
+  {
+    "name": "01_original_windows_map_without_activation",
+    "status": "PASS",
+    "detail": {
+      "ids": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "focus": 2,
+      "isolated_display": ":2",
+      "parent": ":1"
+    },
+    "seconds": 0.002,
+    "events": []
+  },
+  {
+    "name": "02_background_X11_convert_to_floating",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "id": 3,
+        "title": "regression-agent-x11",
+        "app_id": "regression-agent-x11",
+        "pid": 780008,
+        "workspace_id": 2,
+        "is_focused": false,
+        "is_floating": true,
+        "is_urgent": false,
+        "layout": {
+          "pos_in_scrolling_layout": null,
+          "tile_size": [
+            616.0,
+            768.0
+          ],
+          "window_size": [
+            616,
+            768
+          ],
+          "tile_pos_in_workspace_view": [
+            66.0,
+            32.0
+          ],
+          "window_offset_in_tile": [
+            0.0,
+            0.0
+          ]
+        },
+        "focus_timestamp": null
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.096,
+    "events": []
+  },
+  {
+    "name": "03_show_original_X11_no_focus",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "id": 3,
+        "title": "regression-agent-x11",
+        "app_id": "regression-agent-x11",
+        "pid": 780008,
+        "workspace_id": 1,
+        "is_focused": false,
+        "is_floating": true,
+        "is_urgent": false,
+        "layout": {
+          "pos_in_scrolling_layout": null,
+          "tile_size": [
+            400.0,
+            320.0
+          ],
+          "window_size": [
+            400,
+            320
+          ],
+          "tile_pos_in_workspace_view": [
+            800.0,
+            80.0
+          ],
+          "window_offset_in_tile": [
+            0.0,
+            0.0
+          ]
+        },
+        "focus_timestamp": null
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.218,
+    "events": []
+  },
+  {
+    "name": "04_single_request_hidden_workspace_PNG_complete",
+    "status": "PASS",
+    "detail": {
+      "png_bytes": 13708,
+      "sha256": "16e11a9afe8c9d1c907244b7cb82a25173327daa2bb550a53665007017c51602",
+      "focus": 2
+    },
+    "seconds": 0.086,
+    "events": [
+      {
+        "WindowOpenedOrChanged": {
+          "window": {
+            "id": 3,
+            "title": "regression-agent-x11",
+            "app_id": "regression-agent-x11",
+            "pid": 780008,
+            "workspace_id": 2,
+            "is_focused": false,
+            "is_floating": true,
+            "is_urgent": false,
+            "layout": {
+              "pos_in_scrolling_layout": null,
+              "tile_size": [
+                400.0,
+                320.0
+              ],
+              "window_size": [
+                400,
+                320
+              ],
+              "tile_pos_in_workspace_view": [
+                800.0,
+                80.0
+              ],
+              "window_offset_in_tile": [
+                0.0,
+                0.0
+              ]
+            },
+            "focus_timestamp": null
+          }
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/04-background-capture.png"
+        }
+      }
+    ]
+  },
+  {
+    "name": "05_XSendEvent_is_not_a_delivery_path",
+    "status": "LIMITATION",
+    "error": "XSendEvent delivered nothing (text stayed '', xid 4194308); per-window X11 input uses the agent X11 master, see suite2 05/10/14",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 25, in test\n    detail=fn()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 104, in text_send_event\n    raise RuntimeError('XSendEvent delivered nothing (text stayed %r, xid %d); per-window X11 '\n                       'input uses the agent X11 master, see suite2 05/10/14'%(after,xid))\nRuntimeError: XSendEvent delivered nothing (text stayed '', xid 4194308); per-window X11 input uses the agent X11 master, see suite2 05/10/14\n",
+    "seconds": 1.703,
+    "events": []
+  },
+  {
+    "name": "06_native_agent_seat_keyboard_only",
+    "status": "PASS",
+    "detail": {
+      "result": "skipping motion, keyboard only on seat agent-0\ncompositor keymap: 35758 bytes\nkey 30 press+release sent on the seat's virtual keyboard\n",
+      "focus": 2,
+      "focus_transitions": [],
+      "text": "a"
+    },
+    "seconds": 0.105,
+    "events": []
+  },
+  {
+    "name": "07_X11_agent_seat_keyboard_only",
+    "status": "PASS",
+    "detail": {
+      "result": "skipping motion, keyboard only on seat agent-0\ncompositor keymap: 35758 bytes\nkey 48 press+release sent on the seat's virtual keyboard\n",
+      "focus": 2,
+      "focus_transitions": [],
+      "text": "b"
+    },
+    "seconds": 0.1,
+    "events": []
+  },
+  {
+    "name": "08_thirty_show_hide_roundtrips_no_activation",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "rounds": 30,
+        "same_id": 3
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.51,
+    "events": []
+  },
+  {
+    "name": "09_interleaved_human_and_native_agent_keys",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "human": "hhhhhhhhhhhh",
+        "agent": "aaaaaaaaaaaaa"
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.529,
+    "events": []
+  },
+  {
+    "name": "10_shared_X11_human_agent_key_isolation",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "human": "hhhhhhhhh",
+        "agent": "baaaaaaaa"
+      },
+      "focus": 5,
+      "focus_transitions": []
+    },
+    "seconds": 0.884,
+    "events": []
+  },
+  {
+    "name": "11_twelve_unique_single_request_captures",
+    "status": "PASS",
+    "detail": {
+      "requests": 12,
+      "sizes": [
+        11937,
+        11937,
+        11937,
+        11937,
+        11937,
+        11937,
+        11937,
+        11937,
+        11937,
+        11925,
+        11925,
+        11925
+      ]
+    },
+    "seconds": 1.455,
+    "events": [
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-0.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-1.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-2.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-3.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-4.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-5.png"
+        }
+      },
+      {
+        "WindowFocusTimestampChanged": {
+          "id": 2,
+          "focus_timestamp": {
+            "secs": 9093,
+            "nanos": 797516088
+          }
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-6.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-7.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-8.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-9.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-10.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-11.png"
+        }
+      }
+    ]
+  },
+  {
+    "name": "12_invalid_target_fails_closed",
+    "status": "PASS",
+    "detail": {
+      "pin_error": {
+        "Err": "scoped target: no window with id 99999"
+      },
+      "capture_error": "error: scoped screenshot: no window with id 99999\n"
+    },
+    "seconds": 0.01,
+    "events": []
+  },
+  {
+    "name": "13_show_X11_above_floating_human_without_activation",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "human_floating": true,
+        "same_target": 3
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.173,
+    "events": []
+  },
+  {
+    "name": "14_strict_no_focus_when_human_hovers_real_window",
+    "status": "PASS",
+    "detail": {
+      "focus_before": 2,
+      "focus_after": 2,
+      "hovered_window": 3,
+      "pointer": [
+        1100,
+        220
+      ]
+    },
+    "seconds": 1.158,
+    "events": [
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  616.0,
+                  768.0
+                ],
+                "window_size": [
+                  616,
+                  768
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  500.0,
+                  768.0
+                ],
+                "window_size": [
+                  500,
+                  768
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  500.0,
+                  500.0
+                ],
+                "window_size": [
+                  500,
+                  500
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+fix(skill): union the personal and project filter layers
+
+The filter resolved layers as project-over-personal precedence, so a project
+config replaced the personal rules and the effective view showed whichever
+layer existed. A skill is now visible when either layer allows it.
+
+- filter.ts: filterSkill unions both layers; an allow in either layer wins
+  and a deny in one layer no longer vetoes an allow in the other.
+- index.ts: loadRules compiles each layer independently, so a project config
+  alone filters when no personal config exists. Previously both layers
+  missing a personal config skipped filtering entirely and bypassed the
+  whitelist.
+- index.ts: list() publishes the verdict onto the candidate's modelInvocable
+  flag, so a config allow overrides the skill's own frontmatter deny
+  (ADR-0002), which never reached the catalog before.
+- config.ts: mergeConfigs unions allow and deny patterns; the controller's
+  getEffective reads that union instead of the project-or-personal pick.
+- ui-skill-filter: the Sidebar tab labels the merged and project rule lists
+  with their own locale keys instead of the personal layer's, and the copy
+  describes the union instead of replacement.
+
+Also repairs pre-existing damage that blocked every build in this worktree:
+the apps/cli and web-app manifests each carried a duplicated dependency key
+with a missing comma (invalid JSON), ui-skill-filter's tsdown config still
+passed a package name where the shared helper takes the package directory,
+and the skill-filter /config subpath had no source alias, which failed the
+Typert gate.

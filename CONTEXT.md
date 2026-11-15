@@ -63,36 +63,6 @@ _Avoid_: 报告、总结文档
 以下术语只出现在历史计划文档里，不再是现状；现行语义见 ADR-0011。
 队长 (Captain) / 队长类别 (Captain Category) / 队长模式 / 类别章程 (Charter) / 形式核验 (Formal Check) / 终审 (Final Review)
 
-### 模型路由
-
-**判断状态 (Decision State)**:
-交给 Laya 做路由判断的输入——本对话中全部用户消息的拼接，不含助手输出与工具结果。
-_Avoid_: 上下文、prompt、state
-
-**判断层 (Decision Layer)**:
-消费 `ctx.laya`、把任务属性映射成路由决策的插件层；它不产生对话内容，只做选择。
-_Avoid_: 路由器、调度器、router
-
-**路由决策 (Route Decision)**:
-每个用户轮次开始时产出的一组选择：用哪个模型、什么思考档位、是否触发压缩。
-_Avoid_: 模型选择、routing
-
-**档位映射 (Effort Mapping)**:
-把判断层给出的任务维度翻译成目标 provider 真正声明支持的 `reasoningEffort` 的过程；不支持的档位不传。
-_Avoid_: 思考等级、reasoning effort
-
-**影子模式 (Shadow Mode)**:
-判断层只记录决策与概率、不改动实际行为的运行模式；用来在生效前对表校准。
-_Avoid_: 干跑、dry run、试运行
-
-**任务连续性 (Task Continuity)**:
-最新用户消息是否仍在延续之前的任务；判断层用它作压缩触发的主判据。
-_Avoid_: 话题漂移、上下文切换、topic shift
-
-**自动档 (Auto Route)**:
-模型选择器里的 `auto` 条目——选中它表示这个会话的模型交给判断层逐轮决定；选具体模型则表示这一项完全听人的。
-_Avoid_: 自动模式、auto 模式
-
 ### 模型访问与压缩
 
 **压缩权 (Compression Ownership)**:

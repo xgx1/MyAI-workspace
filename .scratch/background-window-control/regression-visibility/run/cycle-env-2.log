@@ -1,0 +1,2 @@
+READY {"parent_display": ":1", "display": ":2", "wayland": "wayland-1", "ipc": "/run/user/1000/bwc-reg-788764/niri.wayland-1.788782.sock", "runtime": "/run/user/1000/bwc-reg-788764", "pids": {"xvfb": 788776, "niri": 788782, "satellite": 788853}}
+CLEANED

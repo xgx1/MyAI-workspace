@@ -1,0 +1,13 @@
+2026-11-06T07:19:38.292255Z  INFO niri: starting version 26.04 (v26.04-10-g0647becb-modified)
+2026-11-06T07:19:38.295961Z DEBUG niri_config: loaded config from "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/poc.kdl"
+2026-11-06T07:19:38.358664Z DEBUG niri::niri: putting output winit at x=0 y=0
+2026-11-06T07:19:38.358806Z  INFO niri: listening on Wayland socket: wayland-3
+2026-11-06T07:19:38.358819Z  INFO niri: IPC listening on: /run/user/1000/niri.wayland-3.461165.sock
+2026-11-06T07:19:38.360504Z  INFO niri: listening on X11 socket: :9
+2026-11-06T07:19:39.368443Z DEBUG niri::utils::xwayland::satellite: connection to X11 abstract socket; spawning xwayland-satellite
+2026-11-06T07:20:10.386943Z  WARN niri::ipc::server: error processing IPC request: "scoped target: no window with id 99999"
+2026-11-06T07:20:15.382817Z DEBUG niri::agent_seat: agent seat: reconcile candidates=[(MappedId(2), Wayland(Some("regression-human"))), (MappedId(5), Wayland(Some("regression-human-x11"))), (MappedId(3), Wayland(Some("regression-agent-x11"))), (MappedId(4), Wayland(Some("regression-agent-native")))] pinned=Some(MappedId(3)) pin_changed=true
+2026-11-06T07:20:24.428627Z DEBUG niri::niri: saving screenshot to "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/smoke-capture.png"
+2026-11-06T07:20:25.387024Z  INFO niri::utils::signals::platform: quitting due to receiving signal SIGTERM
+2026-11-06T07:20:26.388011Z DEBUG niri::utils::watcher: exiting watcher thread for Explicit("/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/poc.kdl")
+2026-11-06T07:20:26.389557Z  WARN niri::utils::xwayland::satellite: xwayland-satellite exited with: exit status: 101

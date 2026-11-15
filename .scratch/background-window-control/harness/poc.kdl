@@ -1,0 +1,8 @@
+window-rule {
+    match app-id="^agent-seat-target$"
+    open-focused false
+}
+
+binds {
+    A { spawn "sh" "-c" "touch /tmp/poc/bind-fired"; }
+}

@@ -1,0 +1,446 @@
+[
+  {
+    "name": "01_original_windows_map_without_activation",
+    "status": "PASS",
+    "detail": {
+      "ids": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "focus": 2,
+      "isolated_display": ":3",
+      "parent": ":1"
+    },
+    "seconds": 0.002,
+    "events": []
+  },
+  {
+    "name": "02_background_X11_convert_to_floating",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "id": 3,
+        "title": "regression-agent-x11",
+        "app_id": "regression-agent-x11",
+        "pid": 501567,
+        "workspace_id": 2,
+        "is_focused": false,
+        "is_floating": true,
+        "is_urgent": false,
+        "layout": {
+          "pos_in_scrolling_layout": null,
+          "tile_size": [
+            616.0,
+            768.0
+          ],
+          "window_size": [
+            616,
+            768
+          ],
+          "tile_pos_in_workspace_view": [
+            66.0,
+            32.0
+          ],
+          "window_offset_in_tile": [
+            0.0,
+            0.0
+          ]
+        },
+        "focus_timestamp": null
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.097,
+    "events": []
+  },
+  {
+    "name": "03_show_original_X11_no_focus",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "id": 3,
+        "title": "regression-agent-x11",
+        "app_id": "regression-agent-x11",
+        "pid": 501567,
+        "workspace_id": 1,
+        "is_focused": false,
+        "is_floating": true,
+        "is_urgent": false,
+        "layout": {
+          "pos_in_scrolling_layout": null,
+          "tile_size": [
+            400.0,
+            320.0
+          ],
+          "window_size": [
+            400,
+            320
+          ],
+          "tile_pos_in_workspace_view": [
+            800.0,
+            80.0
+          ],
+          "window_offset_in_tile": [
+            0.0,
+            0.0
+          ]
+        },
+        "focus_timestamp": null
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.207,
+    "events": []
+  },
+  {
+    "name": "04_single_request_hidden_workspace_PNG_complete",
+    "status": "PASS",
+    "detail": {
+      "png_bytes": 13708,
+      "sha256": "16e11a9afe8c9d1c907244b7cb82a25173327daa2bb550a53665007017c51602",
+      "focus": 2
+    },
+    "seconds": 0.088,
+    "events": [
+      {
+        "WindowOpenedOrChanged": {
+          "window": {
+            "id": 3,
+            "title": "regression-agent-x11",
+            "app_id": "regression-agent-x11",
+            "pid": 501567,
+            "workspace_id": 2,
+            "is_focused": false,
+            "is_floating": true,
+            "is_urgent": false,
+            "layout": {
+              "pos_in_scrolling_layout": null,
+              "tile_size": [
+                400.0,
+                320.0
+              ],
+              "window_size": [
+                400,
+                320
+              ],
+              "tile_pos_in_workspace_view": [
+                800.0,
+                80.0
+              ],
+              "window_offset_in_tile": [
+                0.0,
+                0.0
+              ]
+            },
+            "focus_timestamp": null
+          }
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/04-background-capture.png"
+        }
+      }
+    ]
+  },
+  {
+    "name": "05_XSendEvent_text_to_unfocused_original",
+    "status": "FAIL",
+    "error": "False",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 25, in test\n    detail=fn()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 84, in text_send_event\n    wait(lambda:state('regression-agent-x11')['text']==before+'quiet123')\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/testlib.py\", line 33, in wait\n    raise TimeoutError(str(last))\nTimeoutError: False\n",
+    "seconds": 15.193,
+    "events": []
+  },
+  {
+    "name": "06_native_agent_seat_keyboard_only",
+    "status": "PASS",
+    "detail": {
+      "result": "skipping motion, keyboard only on seat agent-0\ncompositor keymap: 35758 bytes\nkey 30 press+release sent on the seat's virtual keyboard\n",
+      "focus": 2,
+      "focus_transitions": [],
+      "text": "a"
+    },
+    "seconds": 0.09,
+    "events": []
+  },
+  {
+    "name": "07_X11_agent_seat_keyboard_only",
+    "status": "PASS",
+    "detail": {
+      "result": "skipping motion, keyboard only on seat agent-0\ncompositor keymap: 35758 bytes\nkey 48 press+release sent on the seat's virtual keyboard\n",
+      "focus": 2,
+      "focus_transitions": [],
+      "text": "b"
+    },
+    "seconds": 0.088,
+    "events": []
+  },
+  {
+    "name": "08_thirty_show_hide_roundtrips_no_activation",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "rounds": 30,
+        "same_id": 3
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.304,
+    "events": []
+  },
+  {
+    "name": "09_interleaved_human_and_native_agent_keys",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "human": "hhhhhhhhhhhh",
+        "agent": "aaaaaaaaaaaaa"
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.249,
+    "events": []
+  },
+  {
+    "name": "10_shared_X11_human_agent_key_isolation",
+    "status": "LIMITATION",
+    "error": "False",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 25, in test\n    detail=fn()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 141, in both_x11\n    return preserved(op,HX)\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 36, in preserved\n    value=call()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 138, in op\n    wait(lambda:state('regression-human-x11')['text']==h+'h'*8,3)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/testlib.py\", line 33, in wait\n    raise TimeoutError(str(last))\nTimeoutError: False\n",
+    "seconds": 3.272,
+    "events": []
+  },
+  {
+    "name": "11_twelve_unique_single_request_captures",
+    "status": "PASS",
+    "detail": {
+      "requests": 12,
+      "sizes": [
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574,
+        11574
+      ]
+    },
+    "seconds": 0.684,
+    "events": [
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-0.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-1.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-2.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-3.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-4.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-5.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-6.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-7.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-8.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-9.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-10.png"
+        }
+      },
+      {
+        "ScreenshotCaptured": {
+          "path": "/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/run/11-single-11.png"
+        }
+      },
+      {
+        "WindowFocusTimestampChanged": {
+          "id": 2,
+          "focus_timestamp": {
+            "secs": 6336,
+            "nanos": 266101507
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "12_invalid_target_fails_closed",
+    "status": "FAIL",
+    "error": "{'Ok': 'Handled'}",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 25, in test\n    detail=fn()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 155, in invalid\n    assert 'Err' in result,result\n           ^^^^^^^^^^^^^^^\nAssertionError: {'Ok': 'Handled'}\n",
+    "seconds": 0.002,
+    "events": []
+  },
+  {
+    "name": "13_show_X11_above_floating_human_without_activation",
+    "status": "PASS",
+    "detail": {
+      "result": {
+        "human_floating": true,
+        "same_target": 3
+      },
+      "focus": 2,
+      "focus_transitions": []
+    },
+    "seconds": 0.113,
+    "events": []
+  },
+  {
+    "name": "14_strict_no_focus_when_human_hovers_real_window",
+    "status": "LIMITATION",
+    "error": "focus-follows-mouse activated agent window: 3",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 25, in test\n    detail=fn()\n  File \"/home/sx/projects/MyAI/.scratch/background-window-control/regression-visibility/suite.py\", line 181, in hover\n    assert focus()['id']==before,'focus-follows-mouse activated agent window: '+str(focus()['id'])\n           ^^^^^^^^^^^^^^^^^^^^^\nAssertionError: focus-follows-mouse activated agent window: 3\n",
+    "seconds": 0.074,
+    "events": [
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  616.0,
+                  768.0
+                ],
+                "window_size": [
+                  616,
+                  768
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  500.0,
+                  768.0
+                ],
+                "window_size": [
+                  500,
+                  768
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "WindowLayoutsChanged": {
+          "changes": [
+            [
+              2,
+              {
+                "pos_in_scrolling_layout": null,
+                "tile_size": [
+                  500.0,
+                  500.0
+                ],
+                "window_size": [
+                  500,
+                  500
+                ],
+                "tile_pos_in_workspace_view": [
+                  0.0,
+                  0.0
+                ],
+                "window_offset_in_tile": [
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "WorkspaceActiveWindowChanged": {
+          "workspace_id": 1,
+          "active_window_id": 3
+        }
+      },
+      {
+        "WindowFocusChanged": {
+          "id": 3
+        }
+      },
+      {
+        "WindowFocusTimestampChanged": {
+          "id": 3,
+          "focus_timestamp": {
+            "secs": 6337,
+            "nanos": 437047452
+          }
+        }
+      }
+    ]
+  }
+]

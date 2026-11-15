@@ -1,0 +1,1175 @@
+diff --git a/apps/cli/package.json b/apps/cli/package.json
+index c7457556f6..fa5a5ed028 100644
+--- a/apps/cli/package.json
++++ b/apps/cli/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@deepseek-ai/dsh",
+   "description": "dsh CLI: profile launch, plugin management, and configuration inspection",
+-  "version": "0.2.1-alpha.2",
++  "version": "0.2.2-alpha.2",
+   "publishConfig": {
+     "access": "public"
+   },
+@@ -69,6 +69,7 @@
+     "@deepseek-ai/dsh-launch-environment": "workspace:*",
+     "@deepseek-ai/dsh-mcp-client": "workspace:*",
+     "@deepseek-ai/dsh-mcp-resources": "workspace:*",
++    "@deepseek-ai/dsh-official-bundles": "workspace:*",
+     "@deepseek-ai/dsh-persona": "workspace:*",
+     "@deepseek-ai/dsh-plan-mode": "workspace:*",
+     "@deepseek-ai/dsh-plugin-manager": "workspace:*",
+@@ -114,7 +115,25 @@
+     "@deepseek-ai/schemastery": "workspace:~",
+     "commander": "^15.0.0",
+     "js-yaml": "^4.3.2",
+-    "node-addon-require-builtin": "^0.1.9"
++    "node-addon-require-builtin": "^0.1.9",
++    "@deepseek-ai/dsh-http-proxy": "workspace:*",
++    "@deepseek-ai/dsh-mcp-resources": "workspace:*",
++    "@deepseek-ai/dsh-plugin-manager": "workspace:*",
++    "@deepseek-ai/dsh-atomic-write": "workspace:*",
++    "@deepseek-ai/dsh-agent-preset": "workspace:*",
++    "@deepseek-ai/dsh-experimental-voice-input-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-auto-review": "workspace:*",
++    "@deepseek-ai/dsh-experimental-cot-translation-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-badge-skill-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-ralph-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-session-titles-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-terminal-bundle": "workspace:*",
++    "@deepseek-ai/dsh-experimental-liveshare": "workspace:*",
++    "@deepseek-ai/dsh-experimental-session-search": "workspace:*",
++    "@deepseek-ai/dsh-experimental-tool-worktree": "workspace:*",
++    "@deepseek-ai/dsh-experimental-plugin-market-bundle": "workspace:*",
++    "@deepseek-ai/dsh-personalized-recommendations": "workspace:*",
++    "@deepseek-ai/dsh-experimental-forge-bundle": "workspace:*"
+   },
+   "devDependencies": {
+     "@deepseek-ai/dsh-skill-badge": "workspace:*",
+@@ -164,6 +183,7 @@
+     "@deepseek-ai/dsh-subagent-spawn-in-process": "workspace:*",
+     "@deepseek-ai/dsh-subprocess-local": "workspace:*",
+     "@deepseek-ai/dsh-system-prompt": "workspace:*",
++    "@deepseek-ai/dsh-tool-testkit": "workspace:*",
+     "@deepseek-ai/dsh-tools": "workspace:*",
+     "@deepseek-ai/dsh-user-approval": "workspace:*",
+     "@types/js-yaml": "^4.0.9",
+@@ -179,5 +199,8 @@
+     },
+     "./lib/*": "./lib/*",
+     "./package.json": "./package.json"
++  },
++  "engines": {
++    "node": ">=24.9.0"
+   }
+ }
+diff --git a/docs/adr/0002-merge-frontmatter-into-filter.md b/docs/adr/0002-merge-frontmatter-into-filter.md
+index b6b2f0dccb..3c63fa939e 100644
+--- a/docs/adr/0002-merge-frontmatter-into-filter.md
++++ b/docs/adr/0002-merge-frontmatter-into-filter.md
+@@ -2,7 +2,7 @@
+ 
+ English | [中文](0002-merge-frontmatter-into-filter.zh.md)
+ 
+-A skill's `disable-model-invocation: true` frontmatter is treated as an implicit deny rule from the skill itself. The filter engine merges it with personal and project config. Precedence: project config > personal config > skill's own frontmatter deny.
++A skill's `disable-model-invocation: true` frontmatter is treated as an implicit deny rule from the skill itself. The filter engine merges it with personal and project config. The personal and project layers union — a skill either layer allows is visible — and the skill's own frontmatter deny is the weakest rule.
+ 
+ ## Considered Options
+ 
+diff --git a/docs/adr/0002-merge-frontmatter-into-filter.zh.md b/docs/adr/0002-merge-frontmatter-into-filter.zh.md
+index e3d8b2087d..3d3bbaebb0 100644
+--- a/docs/adr/0002-merge-frontmatter-into-filter.zh.md
++++ b/docs/adr/0002-merge-frontmatter-into-filter.zh.md
+@@ -2,7 +2,7 @@
+ 
+ [English](0002-merge-frontmatter-into-filter.md) | 中文
+ 
+-技能自身的 `disable-model-invocation: true` frontmatter 被视为来自该技能的隐式拒绝规则。过滤引擎把它与个人配置、项目配置合并。优先级：项目配置 > 个人配置 > 技能自身 frontmatter 拒绝。
++技能自身的 `disable-model-invocation: true` frontmatter 被视为来自该技能的隐式拒绝规则。过滤引擎把它与个人配置、项目配置合并。个人层与项目层取并集——任一层允许的技能即可见——技能自身 frontmatter 拒绝是最弱规则。
+ 
+ ## 考虑过的方案
+ 
+diff --git a/packages/api/skill-filter-controller/src/index.ts b/packages/api/skill-filter-controller/src/index.ts
+index f92892597d..74d23ee6d7 100644
+--- a/packages/api/skill-filter-controller/src/index.ts
++++ b/packages/api/skill-filter-controller/src/index.ts
+@@ -13,7 +13,7 @@
+ 
+ import type { Context } from '@deepseek-ai/cordis'
+ import {
+-  readPersonalConfig, readProjectConfig, writePersonalConfig, writeProjectConfig,
++  readPersonalConfig, readProjectConfig, writePersonalConfig, writeProjectConfig, mergeConfigs,
+ } from '@deepseek-ai/dsh-skill-filter/config'
+ import type { SkillFilterConfig } from '@deepseek-ai/dsh-skill-filter/config'
+ import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+@@ -114,7 +114,7 @@ export class SkillFilterRemote extends TypertRemoteService {
+   /**
+    * Read the merged effective config for one working directory.
+    * @param request - the project working directory.
+-   * @returns which layers exist and the merged config; `config` is undefined only when no personal config exists.
++   * @returns which layers exist and the union of both layers' rules; `config` is undefined only when neither layer exists.
+    */
+   @Remote
+   async getEffective(request: SkillFilterConfigRequest): Promise<SkillFilterEffectiveView> {
+@@ -122,11 +122,8 @@ export class SkillFilterRemote extends TypertRemoteService {
+       readPersonalConfig(),
+       readProjectConfig(request.cwd),
+     ])
+-    return effectiveView(
+-      personal.config !== undefined,
+-      project.config !== undefined,
+-      project.config ?? personal.config,
+-    )
++    const merged = mergeConfigs(personal.config, project.config)
++    return effectiveView(merged.personalExists, merged.projectExists, merged.config)
+   }
+ 
+   /**
+diff --git a/packages/api/skill-filter-controller/src/types.ts b/packages/api/skill-filter-controller/src/types.ts
+index 28c8dd2ed3..b97191f630 100644
+--- a/packages/api/skill-filter-controller/src/types.ts
++++ b/packages/api/skill-filter-controller/src/types.ts
+@@ -40,11 +40,11 @@ export interface SkillFilterProjectView {
+ 
+ /** The merged, effective config for one project cwd. */
+ export interface SkillFilterEffectiveView {
+-  /** Whether the personal config exists (absence disables filtering). */
++  /** Whether the personal config exists. */
+   readonly personalExists: boolean
+   /** Whether the project config exists. */
+   readonly projectExists: boolean
+-  /** The merged effective config; absent when no personal config exists. */
++  /** The merged effective config; absent when neither layer exists. */
+   readonly config?: SkillFilterConfigView
+ }
+ 
+diff --git a/packages/api/skill-filter-controller/tests/skill-filter-controller.host.spec.ts b/packages/api/skill-filter-controller/tests/skill-filter-controller.host.spec.ts
+index 2014b62af3..98849c3b92 100644
+--- a/packages/api/skill-filter-controller/tests/skill-filter-controller.host.spec.ts
++++ b/packages/api/skill-filter-controller/tests/skill-filter-controller.host.spec.ts
+@@ -136,7 +136,7 @@ describe('the skillFilter Remote namespace', () => {
+     expect(failure).toBeInstanceOf(RemoteError)
+   })
+ 
+-  it('merges personal and project configs with the project winning', async () => {
++  it('unions the personal and project configs', async () => {
+     const { controller } = await boot()
+     expect(await controller.getEffective({ cwd })).toEqual({
+       personalExists: false, projectExists: false,
+@@ -147,7 +147,7 @@ describe('the skillFilter Remote namespace', () => {
+     expect(await controller.getEffective({ cwd })).toEqual({
+       personalExists: true,
+       projectExists: true,
+-      config: { allow: ['git-*'] },
++      config: { allow: ['*', 'git-*'], deny: ['ue-*'] },
+     })
+ 
+     await rm(join(cwd, '.dsh'), { recursive: true, force: true })
+diff --git a/packages/bundle/web-app/package.json b/packages/bundle/web-app/package.json
+index faef7df63a..85e03b68fa 100644
+--- a/packages/bundle/web-app/package.json
++++ b/packages/bundle/web-app/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@deepseek-ai/dsh-web-app",
+-  "description": "The dsh browser-surface bundle: the web patch layer over dsh-base plus the runtime glue plugin (frontend dist serving, web-surface prompt, bash runtime variables, URL line)",
+-  "version": "0.2.1-alpha.2",
++  "description": "The dsh browser-surface bundle: the web patch layer over dsh-base plus the runtime glue plugin (frontend dist serving, bash runtime variables, URL line)",
++  "version": "0.2.2-alpha.2",
+   "publishConfig": {
+     "access": "public"
+   },
+@@ -25,9 +25,13 @@
+     "./cordis.patch.yml": "./cordis.patch.yml",
+     "./presets/*.patch.yml": "./presets/*.patch.yml",
+     "./src/*": "./src/*",
+-    "./package.json": "./package.json"
++    "./package.json": "./package.json",
++    "./startup/locale/*.json": "./locale/startup/*.json",
++    "./locale/*.json": "./locale/*.json"
+   },
+   "files": [
++    "locale/*.json",
++    "locale/startup/*.json",
+     "lib/index.js",
+     "lib/startup.js",
+     "cordis.patch.yml",
+@@ -77,6 +81,7 @@
+     "@deepseek-ai/dsh-client-ui-approval": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-attachment": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-brand-official": "workspace:*",
++    "@deepseek-ai/dsh-message-quotes": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-chat": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-commands": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-conversation": "workspace:*",
+@@ -84,6 +89,7 @@
+     "@deepseek-ai/dsh-client-ui-deliverables": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-directory-picker-browse": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-directory-picker-native": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-entry-customization": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-goal": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-input-trigger": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-jobs": "workspace:*",
+@@ -96,6 +102,8 @@
+     "@deepseek-ai/dsh-client-ui-plugin-manager": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-reference": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-secret-mask": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-session": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-schedule": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-session": "workspace:*",
+     "@deepseek-ai/dsh-client-ui-settings": "workspace:*",
+@@ -148,6 +156,7 @@
+     "@deepseek-ai/dsh-persona": "workspace:*",
+     "@deepseek-ai/dsh-plan-mode": "workspace:*",
+     "@deepseek-ai/dsh-plugin-manager": "workspace:*",
++    "@deepseek-ai/dsh-plugin-market": "workspace:*",
+     "@deepseek-ai/dsh-schedule": "workspace:*",
+     "@deepseek-ai/dsh-session-log-export": "workspace:*",
+     "@deepseek-ai/dsh-session-reference": "workspace:*",
+@@ -162,6 +171,7 @@
+     "@deepseek-ai/dsh-tool-bash": "workspace:*",
+     "@deepseek-ai/dsh-tool-bash-persistent": "workspace:*",
+     "@deepseek-ai/dsh-tool-cordis": "workspace:*",
++    "@deepseek-ai/dsh-tool-executor-ptc": "workspace:*",
+     "@deepseek-ai/dsh-tool-fs": "workspace:*",
+     "@deepseek-ai/dsh-tool-fs-search": "workspace:*",
+     "@deepseek-ai/dsh-tool-goal": "workspace:*",
+@@ -182,13 +192,24 @@
+     "@deepseek-ai/dsh-workspace-changes": "workspace:*",
+     "@deepseek-ai/schemastery": "workspace:~",
+     "commander": "^15.0.0",
+-    "open": "^11.0.2"
++    "open": "^11.0.2",
++    "@deepseek-ai/dsh-api-account-controller": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-settings-account": "workspace:*",
++    "@deepseek-ai/dsh-client-shortcuts": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-shortcuts": "workspace:*",
++    "@deepseek-ai/dsh-client-product-analytics": "workspace:*",
++    "@deepseek-ai/dsh-host-product-telemetry-otel": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-settings-session-log": "workspace:*",
++    "@deepseek-ai/dsh-harness-dev-context": "workspace:*",
++    "@deepseek-ai/dsh-deliverable-file-references": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-file-drag": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-context-menu": "workspace:*",
++    "@deepseek-ai/dsh-client-ui-file-actions": "workspace:*"
+   },
+   "peerDependencies": {
+     "@deepseek-ai/cordis": "workspace:~",
+     "@deepseek-ai/cordis-plugin-loader": "workspace:~",
+-    "@deepseek-ai/dsh-shell-env": "workspace:*",
+-    "@deepseek-ai/dsh-system-prompt": "workspace:*"
++    "@deepseek-ai/dsh-shell-env": "workspace:*"
+   },
+   "devDependencies": {
+     "@deepseek-ai/cordis": "workspace:~",
+@@ -200,7 +221,6 @@
+     "@deepseek-ai/dsh-session": "workspace:*",
+     "@deepseek-ai/dsh-session-projection": "workspace:*",
+     "@deepseek-ai/dsh-shell-env": "workspace:*",
+-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
+     "@deepseek-ai/dsh-typert-registry": "workspace:*",
+     "@deepseek-ai/libreoffice-kit": "^0.1.5",
+     "@deepseek-ai/dsh-otel": "workspace:*"
+diff --git a/packages/client/ui-skill-filter/README.md b/packages/client/ui-skill-filter/README.md
+index cd20aad46f..5df63269f6 100644
+--- a/packages/client/ui-skill-filter/README.md
++++ b/packages/client/ui-skill-filter/README.md
+@@ -59,7 +59,7 @@ Both surfaces call the same face, bound once to `ctx.remote`. Every call folds a
+ 
+ ### Draft ownership
+ 
+-The rule rows are drafts the surface owns. A save writes the whole layer — the files are not merged field by field — and republishes the accepted copy so the rows show what the Host kept. The Sidebar tab seeds its project draft from the project config when one exists and from the merged config when none does, because a project config replaces the personal rules outright.
++The rule rows are drafts the surface owns. A save writes the whole layer — the files are not merged field by field — and republishes the accepted copy so the rows show what the Host kept. The Sidebar tab seeds its project draft from the project config when one exists and from the merged config when none does, because the two layers union and the draft edits the project layer.
+ 
+ </details>
+ 
+@@ -87,7 +87,7 @@ None; this package neither assembles nor sends a provider request.
+ 
+ ## Known Limitations and Deferred Work
+ 
+-- A save replaces the whole layer, so a project that wants one extra skill restates the personal list rather than adding a single pattern over it.
++- The layers union, so a project cannot hide a skill the personal config allows; that skill comes off the personal list instead.
+ - Neither surface explains a hidden skill beyond its current state: a skill hidden by its own frontmatter and one hidden by the merged rules read the same here.
+ - The catalog is the Session's, so a Settings page opened before any Session exists shows no skill list.
+ 
+diff --git a/packages/client/ui-skill-filter/README.zh.md b/packages/client/ui-skill-filter/README.zh.md
+index 7b99fab35b..5f5b27d681 100644
+--- a/packages/client/ui-skill-filter/README.zh.md
++++ b/packages/client/ui-skill-filter/README.zh.md
+@@ -59,7 +59,7 @@ kind: "package-reference"
+ 
+ ### 草稿归属
+ 
+-规则行是界面自己的草稿。保存写的是整层——文件不按字段合并——并重新发布被接受的副本，让行显示宿主最终保留的内容。右侧栏标签页的项目草稿：存在项目配置时取自项目配置，不存在时取自合并配置，因为项目配置本就整体替换个人规则。
++规则行是界面自己的草稿。保存写的是整层——文件不按字段合并——并重新发布被接受的副本，让行显示宿主最终保留的内容。右侧栏标签页的项目草稿：存在项目配置时取自项目配置，不存在时取自合并配置，因为两层取并集，草稿编辑的是项目层。
+ 
+ </details>
+ 
+@@ -88,7 +88,7 @@ kind: "package-reference"
+ ## Known Limitations and Deferred Work
+ 
+ 无。
+-- 保存替换整层，所以项目想多放行一个技能时必须重写个人清单，而不是在其上加一条模式。
++- 两层取并集，因此项目无法隐藏个人配置允许的技能；该技能要从个人清单里去掉。
+ - 两个界面都只展示隐藏技能的当前状态，不解释原因：被自身 frontmatter 隐藏与被合并规则隐藏在这里读起来一样。
+ 
+ - 目录取自会话，因此在还没有任何会话时打开设置页看不到技能列表。
+diff --git a/packages/client/ui-skill-filter/src/client/SkillFilterBody.tsx b/packages/client/ui-skill-filter/src/client/SkillFilterBody.tsx
+index 59caf61b1b..f0c2e3b250 100644
+--- a/packages/client/ui-skill-filter/src/client/SkillFilterBody.tsx
++++ b/packages/client/ui-skill-filter/src/client/SkillFilterBody.tsx
+@@ -3,10 +3,10 @@
+  * project-level override lists, and the session's catalog with each skill's
+  * current visibility.
+  *
+- * The merged view is the Host's own answer — the personal layer, the project
+- * layer, and which one wins. The override lists below it are the draft that
+- * `saveProject` persists; while no project config exists the tab says so and
+- * the personal rules are what the merged panel shows.
++ * The merged view is the Host's own answer — the union of the personal and
++ * project layers. The override lists below it are the draft that `saveProject`
++ * persists; while no project config exists the tab says so and the personal
++ * rules are what the merged panel shows.
+  */
+ import { useCallback, useEffect, useMemo, useState } from 'react'
+ import type { SessionId } from '@deepseek-ai/dsh-session/types'
+@@ -84,8 +84,8 @@ export function SkillFilterBody(props: SkillFilterBodyProps) {
+       }
+       if (effectiveResult.ok) setEffective({ status: 'ready', view: effectiveResult.value })
+       else setEffective({ status: 'failed' })
+-      // A project config replaces the personal rules outright, so its own lists
+-      // are the draft. Without one, the draft starts from what is in force.
++      // The layers union, so the project draft starts from the project's own
++      // lists when it exists, otherwise from the rules in force.
+       const seeded = projectResult.ok ? projectResult.value.config : undefined
+       const inherited = effectiveResult.ok ? effectiveResult.value.config : undefined
+       const base = seeded ?? inherited
+@@ -144,11 +144,11 @@ export function SkillFilterBody(props: SkillFilterBodyProps) {
+               {merged.projectExists ? t('project.present') : t('project.absent')}
+             </p>
+             <p className={css.mergedPatterns}>
+-              {t('personal.allow')}: {merged.config.allow.join(', ')}
++              {t('effective.allow')}: {merged.config.allow.join(', ')}
+             </p>
+             {merged.config.deny !== undefined && merged.config.deny.length > 0 && (
+               <p className={css.mergedPatterns}>
+-                {t('personal.deny')}: {merged.config.deny.join(', ')}
++                {t('effective.deny')}: {merged.config.deny.join(', ')}
+               </p>
+             )}
+           </>
+@@ -167,8 +167,8 @@ export function SkillFilterBody(props: SkillFilterBodyProps) {
+         {project.status === 'ready' && project.exists && (
+           <p className={css.note}>{t('project.present')}</p>
+         )}
+-        <RuleList t={t} heading={t('personal.allow')} hint={t('personal.allowHint')} patterns={allow} onChange={setAllow} />
+-        <RuleList t={t} heading={t('personal.deny')} hint={t('personal.denyHint')} patterns={deny} onChange={setDeny} />
++        <RuleList t={t} heading={t('project.allow')} hint={t('project.allowHint')} patterns={allow} onChange={setAllow} />
++        <RuleList t={t} heading={t('project.deny')} hint={t('project.denyHint')} patterns={deny} onChange={setDeny} />
+         <div className={css.actions}>
+           <Button variant="primary" disabled={save === 'saving' || cwd === undefined} onClick={onSave}>
+             {save === 'saving' ? t('action.saving') : t('action.save')}
+diff --git a/packages/client/ui-skill-filter/src/client/locales.ts b/packages/client/ui-skill-filter/src/client/locales.ts
+index 80174b6823..8ef50caa8a 100644
+--- a/packages/client/ui-skill-filter/src/client/locales.ts
++++ b/packages/client/ui-skill-filter/src/client/locales.ts
+@@ -9,7 +9,8 @@ export type SkillFilterKey =
+   | 'personal.allowHint' | 'personal.denyHint'
+   | 'project' | 'project.intro' | 'project.absent' | 'project.present'
+   | 'project.error' | 'project.inherits'
+-  | 'effective' | 'effective.none'
++  | 'project.allow' | 'project.deny' | 'project.allowHint' | 'project.denyHint'
++  | 'effective' | 'effective.none' | 'effective.allow' | 'effective.deny'
+   | 'catalog' | 'catalog.intro' | 'catalog.search' | 'catalog.empty'
+   | 'catalog.unavailable' | 'catalog.loadFailed' | 'catalog.retry'
+   | 'state.visible' | 'state.hidden'
+@@ -26,7 +27,7 @@ export const en: Record<SkillFilterKey, string> = {
+   'guide.title': 'Skills',
+   'guide.description': 'Review and override which skills the model can see in this project.',
+   personal: 'Personal rules',
+-  'personal.intro': 'Applied to every project. The project rules below replace them when a project config exists.',
++  'personal.intro': 'Applied to every project. Project rules add to them; a skill either layer allows stays visible.',
+   'personal.absent': 'No personal config yet. Add an allow pattern to start filtering.',
+   'personal.present': 'Loaded from ~/.dsh/skill-filter.yaml.',
+   'personal.error': 'The personal config could not be read; the last valid copy is still in effect.',
+@@ -35,13 +36,19 @@ export const en: Record<SkillFilterKey, string> = {
+   'personal.allowHint': 'Glob patterns that make matching skills visible. Specific skill names win over globs.',
+   'personal.denyHint': 'Glob patterns that hide matching skills. Applied after the allow patterns.',
+   project: 'Project rules',
+-  'project.intro': 'Applied to this project only. When present they replace the personal rules.',
++  'project.intro': 'Applied to this project only. Its allowed skills add to the personal list.',
+   'project.absent': 'No project config; the personal rules apply.',
+   'project.present': 'Loaded from .dsh/skill-filter.yaml in the project root.',
+   'project.error': 'The project config could not be read; treat it as absent until it parses.',
+   'project.inherits': 'Inherited from personal',
++  'project.allow': 'Allowed',
++  'project.deny': 'Denied',
++  'project.allowHint': 'Glob patterns that make matching skills visible. Specific skill names win over globs.',
++  'project.denyHint': 'Glob patterns that hide matching skills. Applied after the allow patterns.',
+   effective: 'Effective rules',
+-  'effective.none': 'No personal config, so every skill keeps its own visibility.',
++  'effective.none': 'No personal or project config, so every skill keeps its own visibility.',
++  'effective.allow': 'Allowed',
++  'effective.deny': 'Denied',
+   catalog: 'Skill catalog',
+   'catalog.intro': 'Search every skill this session can see and switch it between allowed and denied.',
+   'catalog.search': 'Search skills',
+@@ -73,7 +80,7 @@ export const zh: Record<SkillFilterKey, string> = {
+   'guide.title': '技能',
+   'guide.description': '查看并覆盖本项目中对模型可见的技能。',
+   personal: '个人规则',
+-  'personal.intro': '对所有项目生效。存在项目配置时，下面的项目规则会整体替换个人规则。',
++  'personal.intro': '对所有项目生效。项目规则在其之上累加：任一层允许的技能都可见。',
+   'personal.absent': '还没有个人配置。添加一条允许模式即可开始过滤。',
+   'personal.present': '已从 ~/.dsh/skill-filter.yaml 读取。',
+   'personal.error': '个人配置读取失败；仍在沿用上一份有效配置。',
+@@ -82,13 +89,19 @@ export const zh: Record<SkillFilterKey, string> = {
+   'personal.allowHint': '让匹配技能对模型可见的通配模式。具体技能名优先于通配模式。',
+   'personal.denyHint': '隐藏匹配技能的通配模式，在允许模式之后判定。',
+   project: '项目规则',
+-  'project.intro': '只对当前项目生效。一旦存在，就整体替换个人规则。',
++  'project.intro': '只对当前项目生效。其允许的技能会累加到个人规则之上。',
+   'project.absent': '没有项目配置，当前沿用个人规则。',
+   'project.present': '已从项目根目录 .dsh/skill-filter.yaml 读取。',
+   'project.error': '项目配置读取失败；在它能解析之前按缺失处理。',
+   'project.inherits': '继承自个人配置',
++  'project.allow': '允许',
++  'project.deny': '拒绝',
++  'project.allowHint': '让匹配技能对模型可见的通配模式。具体技能名优先于通配模式。',
++  'project.denyHint': '隐藏匹配技能的通配模式，在允许模式之后判定。',
+   effective: '生效规则',
+-  'effective.none': '没有个人配置，所有技能保持自身声明的可见性。',
++  'effective.none': '没有个人或项目配置，所有技能保持自身声明的可见性。',
++  'effective.allow': '允许',
++  'effective.deny': '拒绝',
+   catalog: '技能目录',
+   'catalog.intro': '搜索本会话可见的全部技能，并在允许与拒绝之间切换。',
+   'catalog.search': '搜索技能',
+diff --git a/packages/client/ui-skill-filter/tsdown.config.ts b/packages/client/ui-skill-filter/tsdown.config.ts
+index bca94c2293..7aa03cebc1 100644
+--- a/packages/client/ui-skill-filter/tsdown.config.ts
++++ b/packages/client/ui-skill-filter/tsdown.config.ts
+@@ -1,3 +1,3 @@
+ import { clientBundle } from '../tsdown.client.ts'
+ 
+-export default clientBundle('@deepseek-ai/dsh-client-ui-skill-filter', ['lib/types/index.js'])
++export default clientBundle(import.meta.dirname, ['lib/types/index.js'])
+diff --git a/packages/skill/skill-filter/README.md b/packages/skill/skill-filter/README.md
+index 920c7463a3..e6c4bb7a96 100644
+--- a/packages/skill/skill-filter/README.md
++++ b/packages/skill/skill-filter/README.md
+@@ -33,7 +33,7 @@ Choose this package when a project's agent should see a subset of the installed
+ 
+ ### Configuration files
+ 
+-The personal config lives at `$DSH_HOME/skill-filter.yaml` and applies to every project. The project config lives at `<cwd>/.dsh/skill-filter.yaml` and, when present, replaces the personal rules for that working directory. Both files take the same shape:
++The personal config lives at `$DSH_HOME/skill-filter.yaml` and applies to every project. The project config lives at `<cwd>/.dsh/skill-filter.yaml` and adds to the personal rules for that working directory: the two layers union, so a skill either layer allows is visible. Both files take the same shape:
+ 
+ ```yaml
+ allow:
+@@ -43,7 +43,7 @@ deny:
+   - "git-rebase"
+ ```
+ 
+-`allow` is required; a config with no `allow` key is a parse error. `deny` is optional. A pattern with no glob metacharacters is a specific skill name, and a specific name wins over a glob inside the same file. A skill denied by either file stays user-invocable: only its model-visible flag is cleared.
++`allow` is required; a config with no `allow` key is a parse error. `deny` is optional. A pattern with no glob metacharacters is a specific skill name, and a specific name wins over a glob inside the same file. A skill no file allows stays user-invocable: only its model-visible flag is cleared.
+ 
+ ### Minimal composition
+ 
+@@ -69,7 +69,7 @@ The mounted preset must disable the default filesystem provider so discovery run
+ 
+ ### Rule merging
+ 
+-`filter.ts` compiles each config layer into allow and deny matchers and resolves one skill name across three sources: the project config, the personal config, and the skill's own frontmatter deny. Project rules win over personal rules, personal rules win over frontmatter, and within one file a specific name wins over a glob with ties going to deny. A name no rule allows is denied, because the model is default-deny.
++`filter.ts` compiles each config layer into allow and deny matchers and resolves one skill name across three sources: the project config, the personal config, and the skill's own frontmatter deny. The two config layers union — an allow in either layer makes the skill visible, and a deny in one layer cannot veto an allow in the other — while within one file a specific name wins over a glob with ties going to deny. Frontmatter deny is the weakest source. A name no rule allows is denied, because the model is default-deny.
+ 
+ ### Catalog invalidation
+ 
+@@ -98,7 +98,7 @@ The rules are re-read on every catalog collection, but the registry caches compl
+ 
+ #### What the model sees
+ 
+-`dsh-tool-skill` renders the surviving invocable names and capped descriptions into the catalog: skills whose name matches an allow rule, minus those a deny rule or the skill's own frontmatter removes. A denied skill stays invocable as a plain `/name` reference, and a skill with no matching allow rule is absent from the catalog.
++`dsh-tool-skill` renders the surviving invocable names and capped descriptions into the catalog: skills whose name matches an allow rule in either layer, minus those a deny rule or the skill's own frontmatter removes. A denied skill stays invocable as a plain `/name` reference, and a skill with no matching allow rule is absent from the catalog.
+ 
+ #### Token effect
+ 
+@@ -112,7 +112,7 @@ A config write invalidates the provider's catalog, and the next request appends
+ ## Known Limitations and Deferred Work
+ 
+ - Both files are one flat allow/deny pair. A per-tool, per-directory, or conditional rule needs a schema this package does not define.
+-- The project config replaces the personal rules entirely rather than layering pattern by pattern, so a project that wants one extra skill restates the personal list.
++- The layers union, so a project cannot hide a skill the personal config allows; that skill comes off the personal list instead.
+ - A personal config that fails to parse falls back to the last valid copy, which is cached beside the config file; the project config has no cache and reads as absent.
+ 
+ **Runtime invariant:** No companion is published. The skill registry owns the provider relationship this package contributes to, and the composition and filter suites cover the wrapped provider's catalog and invalidation directly.
+diff --git a/packages/skill/skill-filter/README.zh.md b/packages/skill/skill-filter/README.zh.md
+index 7ebd9f6314..959bb1a154 100644
+--- a/packages/skill/skill-filter/README.zh.md
++++ b/packages/skill/skill-filter/README.zh.md
+@@ -33,7 +33,7 @@ kind: "package-reference"
+ 
+ ### 配置文件
+ 
+-个人配置位于 `$DSH_HOME/skill-filter.yaml`，对所有项目生效。项目配置位于 `<cwd>/.dsh/skill-filter.yaml`，一旦存在，对该工作目录整体替换个人规则。两个文件形状相同：
++个人配置位于 `$DSH_HOME/skill-filter.yaml`，对所有项目生效。项目配置位于 `<cwd>/.dsh/skill-filter.yaml`，在该工作目录上累加个人规则：两层取并集，任一层允许的技能即可见。两个文件形状相同：
+ 
+ ```yaml
+ allow:
+@@ -43,7 +43,7 @@ deny:
+   - "git-rebase"
+ ```
+ 
+-`allow` 必填；缺少 `allow` 的配置是解析错误。`deny` 可选。不含通配元字符的模式是具体技能名，同一文件内具体名优先于通配。被任一文件拒绝的技能仍可被用户调用：只是清掉了它的模型可见标记。
++`allow` 必填；缺少 `allow` 的配置是解析错误。`deny` 可选。不含通配元字符的模式是具体技能名，同一文件内具体名优先于通配。没有任何文件允许的技能仍可被用户调用：只是清掉了它的模型可见标记。
+ 
+ ### 最小组合
+ 
+@@ -69,7 +69,7 @@ deny:
+ 
+ ### 规则合并
+ 
+-`filter.ts` 把每个配置层编译成 allow/deny 匹配器，并在三个来源间判定一个技能名：项目配置、个人配置、技能自身 frontmatter 的拒绝声明。项目规则压过个人规则，个人规则压过 frontmatter，同一文件内具体名压过通配，平局判拒绝。没有任何规则允许的名字一律拒绝，因为模型侧是默认拒绝。
++`filter.ts` 把每个配置层编译成 allow/deny 匹配器，并在三个来源间判定一个技能名：项目配置、个人配置、技能自身 frontmatter 的拒绝声明。两个配置层取并集——任一层允许即可见，单层的拒绝不能否决另一层的允许——同一文件内具体名压过通配，平局判拒绝。frontmatter 拒绝是最弱来源。没有任何规则允许的名字一律拒绝，因为模型侧是默认拒绝。
+ 
+ ### 目录失效
+ 
+@@ -98,7 +98,7 @@ deny:
+ 
+ #### 模型看到什么
+ 
+-过滤后的目录：名字匹配某条允许规则的技能，减去被拒绝规则或技能自身 frontmatter 移除的部分。没有命中任何允许规则的技能不在其中。
++过滤后的目录：名字匹配任一层允许规则的技能，减去被拒绝规则或技能自身 frontmatter 移除的部分。没有命中任何允许规则的技能不在其中。
+ 
+ #### Token 影响
+ 
+@@ -113,7 +113,7 @@ deny:
+ 
+ 无。
+ - 两个文件都只有一对 allow/deny。按工具、按目录或带条件的规则需要本包未定义的 schema。
+-- 项目配置是整体替换个人规则，而不是逐条叠加，所以项目想多放行一个技能时必须重写个人清单。
++- 两层取并集，因此项目无法隐藏个人配置允许的技能；该技能要从个人清单里去掉。
+ 
+ - 个人配置解析失败时回落到上一份有效副本（缓存在配置文件旁）；项目配置没有缓存，读取时按缺失处理。
+ 
+diff --git a/packages/skill/skill-filter/src/config.ts b/packages/skill/skill-filter/src/config.ts
+index 6bb1a2194f..b8bfc26453 100644
+--- a/packages/skill/skill-filter/src/config.ts
++++ b/packages/skill/skill-filter/src/config.ts
+@@ -2,8 +2,8 @@
+  * YAML configuration reader for skill filter rules.
+  *
+  * Reads personal (`$DSH_HOME/skill-filter.yaml`) and project (`<cwd>/.dsh/skill-filter.yaml`)
+- * configs, merges them with project-overrides-personal semantics, and caches the
+- * last valid parse to survive transient YAML corruption.
++ * configs, merges them as the union of both layers' allow and deny patterns, and caches
++ * the last valid parse to survive transient YAML corruption.
+  *
+  * @module @deepseek-ai/dsh-skill-filter/src/config
+  */
+@@ -27,13 +27,13 @@ export interface ConfigLayer {
+   readonly error: Error | undefined
+ }
+ 
+-/** Merge result: personal base + project overlay. */
++/** Merge result: the union of both layers. */
+ export interface MergedFilterConfig {
+   /** Whether the personal config exists. */
+   readonly personalExists: boolean
+   /** Whether the project config exists. */
+   readonly projectExists: boolean
+-  /** The merged effective config, or undefined if personal config is missing. */
++  /** The merged effective config, or undefined when neither layer exists. */
+   readonly config: SkillFilterConfig | undefined
+ }
+ 
+@@ -124,28 +124,31 @@ export async function readProjectConfig(cwd: string | undefined): Promise<Config
+ }
+ 
+ /**
+- * Merge personal and project configs with project-overrides-personal semantics.
++ * Merge personal and project configs into the effective rule set.
+  *
+- * Merge rules:
+- * - If personal config is missing, no filtering is applied (all skills visible).
+- * - If project config exists, its allow/deny rules are used; personal rules are replaced.
+- * - If project config is missing, personal rules are used as-is.
++ * The layers union: the effective allow list carries every pattern either layer
++ * allows, and the effective deny list every pattern either layer denies. A
++ * project therefore adds to the personal rules instead of replacing them, and
++ * either layer alone still filters.
+  *
+  * @param personal - the personal config, or undefined.
+  * @param project - the project config, or undefined.
+- * @returns the merged effective config and metadata.
++ * @returns the merged effective config and metadata; `config` is undefined only when neither layer exists.
+  */
+ export function mergeConfigs(
+   personal: SkillFilterConfig | undefined,
+   project: SkillFilterConfig | undefined,
+ ): MergedFilterConfig {
+-  if (personal === undefined) {
+-    return { personalExists: false, projectExists: project !== undefined, config: undefined }
++  if (personal === undefined && project === undefined) {
++    return { personalExists: false, projectExists: false, config: undefined }
+   }
+-  if (project !== undefined) {
+-    return { personalExists: true, projectExists: true, config: project }
++  const allow = [...new Set([...(personal?.allow ?? []), ...(project?.allow ?? [])])]
++  const deny = [...new Set([...(personal?.deny ?? []), ...(project?.deny ?? [])])]
++  return {
++    personalExists: personal !== undefined,
++    projectExists: project !== undefined,
++    config: { allow, ...deny.length > 0 ? { deny } : {} },
+   }
+-  return { personalExists: true, projectExists: false, config: personal }
+ }
+ 
+ /**
+diff --git a/packages/skill/skill-filter/src/filter.ts b/packages/skill/skill-filter/src/filter.ts
+index 6faba8e303..ea29a85d5b 100644
+--- a/packages/skill/skill-filter/src/filter.ts
++++ b/packages/skill/skill-filter/src/filter.ts
+@@ -1,9 +1,11 @@
+ /**
+  * Glob-based skill filter engine.
+  *
+- * Merges three rule sources (skill's own frontmatter deny, personal config, project config)
+- * and applies precedence: project > personal > skill-own.
+- * Within a single config, specific skill names override glob patterns.
++ * Merges three rule sources (skill's own frontmatter deny, personal config, project config).
++ * The personal and project layers union: a skill either layer allows is visible, so a
++ * project adds to the personal allow list instead of replacing it. Within a single config,
++ * specific skill names override glob patterns. The skill's own frontmatter deny is the
++ * weakest source: an allow in either config layer overrides it.
+  *
+  * A denied skill is NOT removed: its `modelInvocable` flag is cleared so it
+  * disappears from the model catalog while remaining user-invocable via `/name`.
+@@ -105,13 +107,12 @@ export interface FilterResult {
+ }
+ 
+ /**
+- * Evaluate whether a skill should be model-visible, merging all rule sources.
++ * Evaluate whether a skill should be model-visible across both config layers.
+  *
+- * Precedence (highest wins):
+- * 1. Project config
+- * 2. Personal config
+- * 3. Skill's own frontmatter deny
+- * 4. Default: deny (whitelist model)
++ * The two layers union: an allow from either layer makes the skill visible, and a
++ * deny in one layer cannot veto an allow in the other. When neither layer allows
++ * the name, the reported reason names the layer that denied it, then the skill's
++ * own frontmatter deny, then the whitelist default.
+  *
+  * @param name - the skill name.
+  * @param projectRules - compiled project config rules, or undefined if no project config.
+@@ -133,19 +134,15 @@ export function filterSkill(
+       : { visible: true, reason: 'personal-allow' }
+   }
+ 
+-  // Project rules first (highest precedence).
+-  if (projectRules !== undefined) {
+-    const result = evalRuleSet(projectRules, name)
+-    if (result === 'allow') return { visible: true, reason: 'project-allow' }
+-    if (result === 'deny') return { visible: false, reason: 'project-deny' }
+-  }
++  // The layers union: either allow makes the skill visible.
++  const projectVerdict = projectRules === undefined ? 'no-match' : evalRuleSet(projectRules, name)
++  const personalVerdict = personalRules === undefined ? 'no-match' : evalRuleSet(personalRules, name)
++  if (projectVerdict === 'allow') return { visible: true, reason: 'project-allow' }
++  if (personalVerdict === 'allow') return { visible: true, reason: 'personal-allow' }
+ 
+-  // Personal rules.
+-  if (personalRules !== undefined) {
+-    const result = evalRuleSet(personalRules, name)
+-    if (result === 'allow') return { visible: true, reason: 'personal-allow' }
+-    if (result === 'deny') return { visible: false, reason: 'personal-deny' }
+-  }
++  // Neither layer allows: report the denial for debugging.
++  if (projectVerdict === 'deny') return { visible: false, reason: 'project-deny' }
++  if (personalVerdict === 'deny') return { visible: false, reason: 'personal-deny' }
+ 
+   // Skill's own frontmatter deny.
+   if (skillOwnDeny) {
+diff --git a/packages/skill/skill-filter/src/index.ts b/packages/skill/skill-filter/src/index.ts
+index a1152832ff..6430cef23f 100644
+--- a/packages/skill/skill-filter/src/index.ts
++++ b/packages/skill/skill-filter/src/index.ts
+@@ -26,7 +26,7 @@ import type {
+   SkillProviderObservation,
+ } from '@deepseek-ai/dsh-skill'
+ import { compileConfig, filterSkill, type RuleSet } from './filter.js'
+-import { readPersonalConfig, readProjectConfig, mergeConfigs } from './config.js'
++import { readPersonalConfig, readProjectConfig } from './config.js'
+ 
+ export const name = 'skill-filter'
+ export const inject = ['skills']
+@@ -133,14 +133,15 @@ export class FilteredSkillProvider implements SkillProvider {
+         !
+         candidate.invocation.modelInvocable,
+       )
+-      // Denied: keep the candidate (so /name still works) but hide from the model catalog.
+-      if (!verdict.visible) {
+-        return this.own({
+-          ...candidate,
+-          invocation: { ...candidate.invocation, modelInvocable: false },
+-        })
+-      }
+-      return this.own(candidate)
++      // The verdict publishes the flag: a denied skill stays registered (so
++      // /name still works) with the flag cleared, and an allowed skill's flag
++      // is restored, so a config allow overrides the skill's own frontmatter
++      // deny (ADR-0002).
++      if (candidate.invocation.modelInvocable === verdict.visible) return this.own(candidate)
++      return this.own({
++        ...candidate,
++        invocation: { ...candidate.invocation, modelInvocable: verdict.visible },
++      })
+     })
+ 
+     return filtered
+@@ -168,22 +169,19 @@ export class FilteredSkillProvider implements SkillProvider {
+     return candidate.provider === this.name ? candidate : { ...candidate, provider: this.name }
+   }
+ 
+-  /** Load and compile the merged filter rules for the current context. */
++  /** Load and compile the filter rules for the current context. */
+   private async loadRules(cwd: string | undefined): Promise<{
+     personalRules: RuleSet | undefined
+     projectRules: RuleSet | undefined
+   } | undefined> {
+     const personal = await readPersonalConfig()
+-    if (personal.config === undefined) return undefined
+-
+     const project = await readProjectConfig(cwd)
+-    const merged = mergeConfigs(personal.config, project.config)
+-    if (merged.config === undefined) return undefined
+-
+-    return {
+-      personalRules: compileConfig(personal.config),
+-      projectRules: project.config !== undefined ? compileConfig(project.config) : undefined,
+-    }
++    const personalRules = personal.config === undefined ? undefined : compileConfig(personal.config)
++    const projectRules = project.config === undefined ? undefined : compileConfig(project.config)
++    // No config layer at all: no filtering, and every skill keeps the visibility
++    // its own frontmatter declares.
++    if (personalRules === undefined && projectRules === undefined) return undefined
++    return { personalRules, projectRules }
+   }
+ }
+ 
+diff --git a/packages/skill/skill-filter/tests/composition.host.spec.ts b/packages/skill/skill-filter/tests/composition.host.spec.ts
+index 741ec4b924..0cbd3545bb 100644
+--- a/packages/skill/skill-filter/tests/composition.host.spec.ts
++++ b/packages/skill/skill-filter/tests/composition.host.spec.ts
+@@ -50,6 +50,12 @@ function personalConfig(body: string): void {
+   writeFileSync(join(home, '.dsh', 'skill-filter.yaml'), body, 'utf-8')
+ }
+ 
++/** Write the project config for one skill root's working directory. */
++function projectConfig(dir: string, body: string): void {
++  mkdirSync(join(dir, '.dsh'), { recursive: true })
++  writeFileSync(join(dir, '.dsh', 'skill-filter.yaml'), body, 'utf-8')
++}
++
+ /** Boot the real registry with the plugin mounted, as a preset mounts it. */
+ async function boot(skillsDir: string): Promise<Context> {
+   vi.resetModules()
+@@ -62,8 +68,8 @@ async function boot(skillsDir: string): Promise<Context> {
+ }
+ 
+ /** The fixture skills' visibility, as the catalog reports them. */
+-async function visibility(ctx: Context): Promise<Map<string, boolean>> {
+-  const listed = await ctx.skills.list({})
++async function visibility(ctx: Context, cwd?: string): Promise<Map<string, boolean>> {
++  const listed = await ctx.skills.list(cwd === undefined ? {} : { cwd })
+   return new Map(listed.map(skill => [skill.name, skill.invocation.modelInvocable]))
+ }
+ 
+@@ -102,6 +108,36 @@ describe('the skill filter in a real composition', () => {
+     }
+   })
+ 
++  it('filters on the project config alone when no personal config exists', async () => {
++    const dir = skillRoot()
++    try {
++      projectConfig(dir, 'allow:\n  - "git-commit"\n')
++      const ctx = await boot(dir)
++      const state = await visibility(ctx, dir)
++      expect(state.get('git-commit')).toBe(true)
++      expect(state.get('git-rebase')).toBe(false)
++      expect(state.get('ue-build')).toBe(false)
++    } finally {
++      rmSync(dir, { recursive: true, force: true })
++    }
++  })
++
++  it('unions the personal and project layers', async () => {
++    const dir = skillRoot()
++    try {
++      personalConfig('allow:\n  - "git-*"\n')
++      projectConfig(dir, 'allow:\n  - "ue-build"\n')
++      const ctx = await boot(dir)
++      const state = await visibility(ctx, dir)
++      expect(state.get('git-commit')).toBe(true)
++      expect(state.get('git-rebase')).toBe(true)
++      // The project allow also overrides the skill's own frontmatter deny.
++      expect(state.get('ue-build')).toBe(true)
++    } finally {
++      rmSync(dir, { recursive: true, force: true })
++    }
++  })
++
+   it('applies a persisted config write to the next catalog read', async () => {
+     const dir = skillRoot()
+     try {
+diff --git a/packages/skill/skill-filter/tests/filter.spec.ts b/packages/skill/skill-filter/tests/filter.spec.ts
+index 4b6c7203c7..90874dd520 100644
+--- a/packages/skill/skill-filter/tests/filter.spec.ts
++++ b/packages/skill/skill-filter/tests/filter.spec.ts
+@@ -102,12 +102,12 @@ describe('filterSkill', () => {
+     expect(result.reason).toBe('project-allow')
+   })
+ 
+-  it('project deny overrides personal allow', () => {
++  it('personal allow survives a project deny (the layers union)', () => {
+     const personalRules = compileConfig({ allow: ['dotnet-*'] })
+     const projectRules = compileConfig({ allow: [], deny: ['dotnet-*'] })
+     const result = filterSkill('dotnet-architecture', projectRules, personalRules, false)
+-    expect(result.visible).toBe(false)
+-    expect(result.reason).toBe('project-deny')
++    expect(result.visible).toBe(true)
++    expect(result.reason).toBe('personal-allow')
+   })
+ 
+   it('project allow overrides personal deny', () => {
+@@ -127,6 +127,22 @@ describe('filterSkill', () => {
+     const rules = compileConfig({ allow: ['self-*', 'mattpocock-*'] })
+     expect(filterSkill('unreal-new-skill', undefined, rules, false).visible).toBe(false)
+   })
++
++  it('filters on the project layer alone when no personal config exists', () => {
++    const projectRules = compileConfig({ allow: ['self-*'] })
++    const visible = filterSkill('self-new-feature', projectRules, undefined, false)
++    expect(visible.visible).toBe(true)
++    expect(visible.reason).toBe('project-allow')
++    expect(filterSkill('dotnet-architecture', projectRules, undefined, false).visible).toBe(false)
++  })
++
++  it('reports the project denial when neither layer allows the name', () => {
++    const personalRules = compileConfig({ allow: ['self-*'], deny: ['dotnet-*'] })
++    const projectRules = compileConfig({ allow: ['git-*'] })
++    const result = filterSkill('dotnet-architecture', projectRules, personalRules, false)
++    expect(result.visible).toBe(false)
++    expect(result.reason).toBe('personal-deny')
++  })
+ })
+ 
+ describe('readConfigFile', () => {
+@@ -187,17 +203,28 @@ describe('readConfigFile', () => {
+ })
+ 
+ describe('mergeConfigs', () => {
+-  it('no filtering when personal config is missing', () => {
++  it('no filtering when neither config exists', () => {
+     const merged = mergeConfigs(undefined, undefined)
+     expect(merged.config).toBeUndefined()
+     expect(merged.personalExists).toBe(false)
++    expect(merged.projectExists).toBe(false)
+   })
+ 
+-  it('project replaces personal when present', () => {
+-    const personal: SkillFilterConfig = { allow: ['*'] }
+-    const project: SkillFilterConfig = { allow: [], deny: ['dotnet-*'] }
++  it('unions both layers when present', () => {
++    const personal: SkillFilterConfig = { allow: ['self-*'], deny: ['dotnet-*'] }
++    const project: SkillFilterConfig = { allow: ['git-*'] }
+     const merged = mergeConfigs(personal, project)
++    expect(merged.config).toEqual({ allow: ['self-*', 'git-*'], deny: ['dotnet-*'] })
++    expect(merged.personalExists).toBe(true)
++    expect(merged.projectExists).toBe(true)
++  })
++
++  it('filters on the project layer alone when personal config is missing', () => {
++    const project: SkillFilterConfig = { allow: ['self-*'] }
++    const merged = mergeConfigs(undefined, project)
+     expect(merged.config).toEqual(project)
++    expect(merged.personalExists).toBe(false)
++    expect(merged.projectExists).toBe(true)
+   })
+ 
+   it('personal is used when project is missing', () => {
+diff --git a/tsconfig.base.json b/tsconfig.base.json
+index 579ebbb6c5..3d6341d3b1 100644
+--- a/tsconfig.base.json
++++ b/tsconfig.base.json
+@@ -28,7 +28,17 @@
+     // not declaration path aliases, keep each package/vendor source compiled
+     // under its own tsconfig boundary.
+     "paths": {
++      "@deepseek-ai/dsh-client-ui-file-actions": ["./packages/client/ui-file-actions/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-file-actions/client": ["./packages/client/ui-file-actions/src/client/index.ts"],
++      "@deepseek-ai/dsh-client-ui-file-actions/types": ["./packages/client/ui-file-actions/src/types.ts"],
++      "@deepseek-ai/dsh-client-ui-context-menu": ["./packages/client/ui-context-menu/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-context-menu/client": ["./packages/client/ui-context-menu/src/client/index.ts"],
++      "@deepseek-ai/dsh-client-ui-entry-customization": ["./packages/client/ui-entry-customization/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-entry-customization/client": ["./packages/client/ui-entry-customization/src/client/index.ts"],
++      "@deepseek-ai/dsh-client-ui-entry-customization/src/*": ["./packages/client/ui-entry-customization/src/*"],
+       "@deepseek-ai/dsh-experimental-session-search": ["./packages/experimental/session-search/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-subagent-oar": ["./packages/experimental/subagent-oar/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-tool-subagent-oar": ["./packages/experimental/tool-subagent-oar/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-ralph-bundle": ["./packages/experimental/ralph-bundle/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-terminal-bundle": ["./packages/experimental/terminal-bundle/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-badge-skill-bundle": ["./packages/experimental/badge-skill-bundle/src/index.ts"],
+@@ -50,6 +60,18 @@
+       "@deepseek-ai/dsh-experimental-translator": ["./packages/experimental/translator/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-translator/types": ["./packages/experimental/translator/src/types.ts"],
+       "@deepseek-ai/dsh-experimental-client-ui-cot-translation": ["./packages/experimental/client-ui-cot-translation/src/index.ts"],
++      "@deepseek-ai/dsh-action-cards": ["./packages/experimental/action-cards/src/index.ts"],
++      "@deepseek-ai/dsh-action-cards/types": ["./packages/experimental/action-cards/src/types.ts"],
++      "@deepseek-ai/dsh-client-ui-action-cards": ["./packages/experimental/client-ui-action-cards/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-action-cards/client": ["./packages/experimental/client-ui-action-cards/src/client/index.ts"],
++      "@deepseek-ai/dsh-creation-recommendations": ["./packages/experimental/creation-recommendations/src/index.ts"],
++      "@deepseek-ai/dsh-creation-recommendations/types": ["./packages/experimental/creation-recommendations/src/types.ts"],
++      "@deepseek-ai/dsh-client-ui-creation-recommendations": ["./packages/experimental/client-ui-creation-recommendations/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-creation-recommendations/client": ["./packages/experimental/client-ui-creation-recommendations/src/client/index.ts"],
++      "@deepseek-ai/dsh-plugin-recommendations": ["./packages/experimental/plugin-recommendations/src/index.ts"],
++      "@deepseek-ai/dsh-plugin-recommendations/types": ["./packages/experimental/plugin-recommendations/src/types.ts"],
++      "@deepseek-ai/dsh-client-ui-plugin-recommendations": ["./packages/experimental/client-ui-plugin-recommendations/src/index.ts"],
++      "@deepseek-ai/dsh-client-ui-plugin-recommendations/client": ["./packages/experimental/client-ui-plugin-recommendations/src/client/index.ts"],
+       "@deepseek-ai/dsh-experimental-client-ui-cot-translation/types": ["./packages/experimental/client-ui-cot-translation/src/types.ts"],
+       "@deepseek-ai/dsh-experimental-client-ui-cot-translation/client": ["./packages/experimental/client-ui-cot-translation/src/client/index.ts"],
+       "@deepseek-ai/dsh-experimental-cot-translation-bundle": ["./packages/experimental/cot-translation-bundle/src/index.ts"],
+@@ -57,6 +79,7 @@
+       "@deepseek-ai/dsh-experimental-api-speech-to-text": ["./packages/experimental/api-speech-to-text/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-client-ui-voice-input": ["./packages/experimental/client-ui-voice-input/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-voice-input-bundle": ["./packages/experimental/voice-input-bundle/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-plugin-market-bundle": ["./packages/experimental/plugin-market-bundle/src/index.ts"],
+       "@deepseek-ai/dsh-experimental-speech-to-text/wave": ["./packages/experimental/speech-to-text/src/wave.ts"],
+       "@deepseek-ai/dsh-experimental-speech-to-text/types": ["./packages/experimental/speech-to-text/src/types.ts"],
+       "@deepseek-ai/dsh-experimental-api-speech-to-text/types": ["./packages/experimental/api-speech-to-text/src/types.ts"],
+@@ -89,6 +112,12 @@
+       "@deepseek-ai/dsh-computer-use": ["./packages/computer-use/computer-use/src/index.ts"],
+       "@deepseek-ai/dsh-computer-use/brand": ["./packages/computer-use/computer-use/src/brand.ts"],
+       "@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp": ["./packages/experimental/computer-use-cua-driver-mcp/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-cua-macos": ["./packages/experimental/cua-macos/src/index.ts"],
++      "@deepseek-ai/dsh-cua/native-client": ["./packages/experimental/cua/src/native-client.ts"],
++      "@deepseek-ai/dsh-cua/protocol": ["./packages/experimental/cua/src/protocol.ts"],
++      "@deepseek-ai/dsh-cua": ["./packages/experimental/cua/src/index.ts"],
++      "@deepseek-ai/dsh-cua/api": ["./packages/experimental/cua/src/api.ts"],
++      "@deepseek-ai/dsh-cua/bridge": ["./packages/experimental/cua/src/bridge.ts"],
+       "@deepseek-ai/dsh-experimental-computer-use-cua-driver-native": ["./packages/experimental/computer-use-cua-driver-native/src/index.ts"],
+       "@deepseek-ai/cordis": ["./vendor/cordis/src"],
+       "@deepseek-ai/cosmokit": ["./vendor/cosmokit/src"],
+@@ -122,12 +151,16 @@
+       "@deepseek-ai/dsh-api-settings-controller/types": ["./packages/api/settings-controller/src/types.ts"],
+       "@deepseek-ai/dsh-api-skill-filter-controller": ["./packages/api/skill-filter-controller/src/index.ts"],
+       "@deepseek-ai/dsh-api-skill-filter-controller/types": ["./packages/api/skill-filter-controller/src/types.ts"],
++      "@deepseek-ai/dsh-api-remote-access": ["./packages/api/remote-access/src/index.ts"],
++      "@deepseek-ai/dsh-api-remote-access/client": ["./packages/api/remote-access/src/client/index.ts"],
++      "@deepseek-ai/dsh-api-remote-access/types": ["./packages/api/remote-access/src/types.ts"],
+       "@deepseek-ai/dsh-api-workspace-controller": ["./packages/api/workspace-controller/src/index.ts"],
+       "@deepseek-ai/dsh-api-workspace-controller/client": ["./packages/api/workspace-controller/src/client/index.ts"],
+       "@deepseek-ai/dsh-api-workspace-controller/default-workspace": ["./packages/api/workspace-controller/src/default-workspace.ts"],
+       "@deepseek-ai/dsh-api-workspace-controller/types": ["./packages/api/workspace-controller/src/types.ts"],
+       "@deepseek-ai/dsh-typert-protocol": ["./packages/typert/protocol/src/index.ts"],
+       "@deepseek-ai/dsh-typert-protocol/types": ["./packages/typert/protocol/src/types.ts"],
++      "@deepseek-ai/dsh-typert-protocol/remote-info": ["./packages/typert/protocol/src/remote-info.ts"],
+       "@deepseek-ai/dsh-typert-loader": ["./packages/typert/loader/src/index.ts"],
+       "@deepseek-ai/dsh-typert-registry/types": ["./packages/typert/registry/src/types.ts"],
+       "@deepseek-ai/dsh-typert-generator": ["./packages/typert/generator/src/index.ts"],
+@@ -172,6 +205,7 @@
+       "@deepseek-ai/dsh-workflow/types": ["./packages/workflow/workflow/src/types.ts"],
+       "@deepseek-ai/dsh-tool-workflow/types": ["./packages/workflow/tool-workflow/src/types.ts"],
+       "@deepseek-ai/dsh-llm/message": ["./packages/llm/llm/src/message.ts"],
++      "@deepseek-ai/dsh-commands/builtin": ["./packages/interaction/commands/src/builtin.ts"],
+       "@deepseek-ai/dsh-commands/brand": ["./packages/interaction/commands/src/brand.ts"],
+       "@deepseek-ai/dsh-commands/types": ["./packages/interaction/commands/src/types.ts"],
+       "@deepseek-ai/dsh-jobs/brand": ["./packages/jobs/jobs/src/brand.ts"],
+@@ -185,9 +219,11 @@
+       "@deepseek-ai/dsh-file-reference/grammar": ["./packages/context/file-reference/src/grammar.ts"],
+       "@deepseek-ai/dsh-file-reference/types": ["./packages/context/file-reference/src/types.ts"],
+       "@deepseek-ai/dsh-session-reference/types": ["./packages/context/session-reference/src/types.ts"],
++      "@deepseek-ai/dsh-tool-executor-ptc/types": ["./packages/core/tool-executor-ptc/src/types.ts"],
++      "@deepseek-ai/dsh-tool-executor-ptc/client": ["./packages/core/tool-executor-ptc/src/client.ts"],
++      "@deepseek-ai/dsh-tools/pipeline": ["./packages/core/tools/src/pipeline.ts"],
++      "@deepseek-ai/dsh-tool-testkit": ["./packages/test-support/tool-testkit/src/index.ts"],
+       "@deepseek-ai/dsh-tools/presentation": ["./packages/core/tools/src/presentation.ts"],
+-      "@deepseek-ai/dsh-tools/types": ["./packages/core/tools/src/types.ts"],
+-      "@deepseek-ai/dsh-tool-subagent-control/list-agents": ["./packages/subagent/tool-subagent-control/src/list-agents.ts"],
+       "@deepseek-ai/dsh-tool-subagent/model-selection-settings": ["./packages/subagent/tool-subagent/src/model-selection-settings.ts"],
+       "@deepseek-ai/dsh-user-approval/types": ["./packages/interaction/user-approval/src/types.ts"],
+       "@deepseek-ai/dsh-user-questions/types": ["./packages/interaction/user-questions/src/types.ts"],
+@@ -216,14 +252,20 @@
+       "@deepseek-ai/dsh-host-webserver": ["./packages/host/webserver/src"],
+       "@deepseek-ai/dsh-host-frontend-static": ["./packages/host/frontend-static/src"],
+       "@deepseek-ai/dsh-plugin-manager": ["./packages/boot/plugin-manager/src"],
++      "@deepseek-ai/dsh-plugin-manager/diagnostic": ["./packages/boot/plugin-manager/src/diagnostic.ts"],
+       "@deepseek-ai/dsh-plugin-manager/types": ["./packages/boot/plugin-manager/src/types.ts"],
+       "@deepseek-ai/dsh-plugin-manager/registry": ["./packages/boot/plugin-manager/src/registry.ts"],
+       "@deepseek-ai/dsh-plugin-manager/operations": ["./packages/boot/plugin-manager/src/operations.ts"],
+       "@deepseek-ai/dsh-plugin-manager/tools": ["./packages/boot/plugin-manager/src/tools.ts"],
++      "@deepseek-ai/dsh-plugin-market/types": ["./packages/boot/plugin-market/src/types.ts"],
++      "@deepseek-ai/dsh-plugin-market/tools": ["./packages/boot/plugin-market/src/tools.ts"],
++      "@deepseek-ai/dsh-plugin-detail/types": ["./packages/util/plugin-detail/src/types.ts"],
+       "@deepseek-ai/dsh-tool-cordis/host": ["./packages/extensions/tool-cordis/src/host.ts"],
+       "@deepseek-ai/dsh-host-plugin-inventory": ["./packages/host/plugin-inventory/src"],
+       "@deepseek-ai/dsh-host-plugin-inventory/types": ["./packages/host/plugin-inventory/src/types.ts"],
+       "@deepseek-ai/dsh-client-ui-slots": ["./packages/client/ui-slots/src"],
++      "@deepseek-ai/dsh-client-ui-file-drag": ["./packages/client/ui-file-drag/src"],
++      "@deepseek-ai/dsh-client-ui-file-drag/client": ["./packages/client/ui-file-drag/src/client/index.ts"],
+       "@deepseek-ai/dsh-client-ui-attachment": ["./packages/client/ui-attachment/src"],
+       "@deepseek-ai/dsh-client-ui-primitives": ["./packages/client/ui-primitives/src"],
+       "@deepseek-ai/dsh-client-ui-dockkit": ["./packages/client/ui-dockkit/src"],
+@@ -249,6 +291,7 @@
+       "@deepseek-ai/dsh-client-connection": ["./packages/client/connection/src"],
+       "@deepseek-ai/dsh-client-file-upload": ["./packages/client/file-upload/src"],
+       "@deepseek-ai/dsh-client-file-upload/client": ["./packages/client/file-upload/src/client/index.ts"],
++      "@deepseek-ai/dsh-client-file-upload/types": ["./packages/client/file-upload/src/types.ts"],
+       "@deepseek-ai/dsh-api-remotes": ["./packages/api/remotes/src"],
+       "@deepseek-ai/dsh-api-remotes/client": ["./packages/api/remotes/src/client/index.ts"],
+       "@deepseek-ai/dsh-client-hmr": ["./packages/client/hmr/src"],
+@@ -287,8 +330,12 @@
+       "@deepseek-ai/dsh-client-ui-subagent": ["./packages/client/ui-subagent/src"],
+       "@deepseek-ai/dsh-experimental-client-ui-agent-team": ["./packages/experimental/client-ui-agent-team/src"],
+       "@deepseek-ai/dsh-experimental-client-ui-agent-team/client": ["./packages/experimental/client-ui-agent-team/src/client/index.ts"],
++      "@deepseek-ai/dsh-experimental-client-ui-stats": ["./packages/experimental/client-ui-stats/src"],
++      "@deepseek-ai/dsh-experimental-client-ui-stats/client": ["./packages/experimental/client-ui-stats/src/client/index.ts"],
+       "@deepseek-ai/dsh-client-ui-settings-plugins": ["./packages/client/ui-settings-plugins/src"],
+       "@deepseek-ai/dsh-client-ui-settings-shell": ["./packages/client/ui-settings-shell/src"],
++      "@deepseek-ai/dsh-cua/client": ["./packages/experimental/cua/src/client/index.ts"],
++      "@deepseek-ai/dsh-cua/types": ["./packages/experimental/cua/src/remote-types.ts"],
+       "@deepseek-ai/dsh-client-ui-settings-agent-loop": ["./packages/client/ui-settings-agent-loop/src"],
+       "@deepseek-ai/dsh-client-ui-settings-session-log": ["./packages/client/ui-settings-session-log/src"],
+       "@deepseek-ai/dsh-client-ui-settings-subagent": ["./packages/client/ui-settings-subagent/src"],
+@@ -300,6 +347,7 @@
+       "@deepseek-ai/dsh-client-ui-plan": ["./packages/client/ui-plan/src"],
+       "@deepseek-ai/dsh-client-ui-user-questions": ["./packages/client/ui-user-questions/src"],
+       "@deepseek-ai/dsh-client-ui-trajectory": ["./packages/client/ui-trajectory/src"],
++      "@deepseek-ai/dsh-client-ui-trajectory/types": ["./packages/client/ui-trajectory/src/types.ts"],
+       "@deepseek-ai/dsh-client-ui-workspace": ["./packages/client/ui-workspace/src"],
+       "@deepseek-ai/dsh-client-ui-theme": ["./packages/client/ui-theme/src"],
+       "@deepseek-ai/dsh-client-ui-theme/brand-font.css": ["./packages/client/ui-theme/src/styles/brand-font.css"],
+@@ -308,6 +356,7 @@
+       "@deepseek-ai/dsh-client-ui-settings-general/types": ["./packages/client/ui-settings-general/src/types.ts"],
+       "@deepseek-ai/dsh-client-ui-settings-models": ["./packages/client/ui-settings-models/src"],
+       "@deepseek-ai/dsh-client-ui-plugin-manager": ["./packages/client/ui-plugin-manager/src"],
++      "@deepseek-ai/dsh-client-ui-plugin-market": ["./packages/client/ui-plugin-market/src"],
+       "@deepseek-ai/dsh-client-ui-settings-plugin-inventory": ["./packages/client/ui-settings-plugin-inventory/src"],
+       "@deepseek-ai/dsh-client-locale": ["./packages/client/locale/src"],
+       "@deepseek-ai/dsh-client-web/injections": ["./packages/client/web/src/apply-injections.ts"],
+@@ -316,6 +365,7 @@
+       "@deepseek-ai/dsh-client-ui-directory-picker-browse": ["./packages/client/ui-directory-picker-browse/src"],
+       "@deepseek-ai/dsh-client-ui-directory-picker-native": ["./packages/client/ui-directory-picker-native/src"],
+       "@deepseek-ai/dsh-client-ui-open-in-app": ["./packages/client/ui-open-in-app/src"],
++      "@deepseek-ai/dsh-client-ui-secret-mask": ["./packages/client/ui-secret-mask/src"],
+       // sdk/ folders are role-named without their npm-side sdk/jsonrpc prefixes,
+       // so their names do not match their directories and the generated aliases
+       // below cannot map them; these three stay hand-written.
+@@ -329,6 +379,15 @@
+       "@deepseek-ai/dsh-experimental-tool-agent-team": ["./packages/experimental/tool-agent-team/src"],
+       "@deepseek-ai/dsh-experimental-worktree": ["./packages/experimental/worktree/src"],
+       "@deepseek-ai/dsh-experimental-tool-worktree": ["./packages/experimental/tool-worktree/src"],
++      "@deepseek-ai/dsh-experimental-forge": ["./packages/experimental/forge/src"],
++      "@deepseek-ai/dsh-experimental-forge/types": ["./packages/experimental/forge/src/types.ts"],
++      "@deepseek-ai/dsh-experimental-forge-github": ["./packages/experimental/forge-github/src"],
++      "@deepseek-ai/dsh-experimental-forge-session": ["./packages/experimental/forge-session/src"],
++      "@deepseek-ai/dsh-experimental-forge-bundle": ["./packages/experimental/forge-bundle/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-forge-session/types": ["./packages/experimental/forge-session/src/types.ts"],
++      "@deepseek-ai/dsh-experimental-client-ui-forge": ["./packages/experimental/client-ui-forge/src/index.ts"],
++      "@deepseek-ai/dsh-experimental-client-ui-forge/types": ["./packages/experimental/client-ui-forge/src/types.ts"],
++      "@deepseek-ai/dsh-experimental-client-ui-forge/client": ["./packages/experimental/client-ui-forge/src/client/index.ts"],
+       "@deepseek-ai/dsh-experimental-webworker-runtime": ["./packages/experimental/webworker-runtime/src"],
+       "@deepseek-ai/dsh-experimental-webworker-packer": ["./packages/experimental/webworker-packer/src"],
+       "@deepseek-ai/dsh-experimental-inspector": ["./packages/experimental/inspector/src"],
+@@ -336,6 +395,10 @@
+       "@deepseek-ai/dsh-experimental-session-inspector": ["./packages/experimental/session-inspector/src"],
+       "@deepseek-ai/dsh-experimental-session-inspector/client": ["./packages/experimental/session-inspector/src/client/index.ts"],
+       "@deepseek-ai/dsh-experimental-inspector/client": ["./packages/experimental/inspector/src/client/index.ts"],
++      "@deepseek-ai/dsh-experimental-liveshare": ["./packages/experimental/liveshare/src"],
++      "@deepseek-ai/dsh-experimental-liveshare/client": ["./packages/experimental/liveshare/src/client/index.ts"],
++      "@deepseek-ai/dsh-experimental-liveshare/viewer-declarations": ["./packages/experimental/liveshare/src/viewer-declarations.ts"],
++      "@deepseek-ai/dsh-experimental-liveshare-protocol": ["./packages/experimental/liveshare-protocol/src"],
+       "@deepseek-ai/dsh-experimental-ptc-runtime-python": ["./packages/experimental/ptc-runtime-python/src"],
+       "@deepseek-ai/dsh-util-crypto": ["./packages/util/crypto/src"],
+       "@deepseek-ai/dsh-util-values": ["./packages/util/values/src"],
+@@ -343,12 +406,18 @@
+       // util/ folders are role-named without the util- prefix their npm names carry,
+       // so these aliases stay hand-written like dsh-util-crypto above.
+       "@deepseek-ai/dsh-util-time": ["./packages/util/time/src"],
++      "@deepseek-ai/dsh-util-file-drag": ["./packages/util/file-drag/src"],
+       // session-log-export lives under session-query/, so the generated aliases map only its
+       // bare name; the browser half needs this explicit subpath for source-mode dynamic imports.
+       "@deepseek-ai/dsh-session-log-export/client": ["./packages/session-query/session-log-export/src/client"],
+       "@deepseek-ai/dsh-compaction-image-offload/projection": ["./packages/compaction/compaction-image-offload/src/projection.ts"],
+       "@deepseek-ai/dsh-session-format-catalog/message-projections": ["./packages/session/session-format-catalog/src/message-projections.ts"],
+       "@deepseek-ai/dsh-native-command/types": ["./packages/util/native-command/src/types.ts"],
++      "@deepseek-ai/dsh-message-quotes/client": ["./packages/session/message-quotes/src/client/index.ts"],
++      "@deepseek-ai/dsh-ptc-runtime-node/configuration": ["./packages/ptc-runtime/ptc-runtime-node/src/configuration.ts"],
++      // The controller reads the config module through this subpath, which the generated
++      // bare-name aliases do not cover.
++      "@deepseek-ai/dsh-skill-filter/config": ["./packages/skill/skill-filter/src/config.ts"],
+       // BEGIN generated package aliases — pnpm run gen-tsconfig-paths
+       "@deepseek-ai/dsh-acp": ["./packages/acp/acp/src"],
+       "@deepseek-ai/dsh-acp-app": ["./packages/bundle/acp-app/src"],
+@@ -383,17 +452,21 @@
+       "@deepseek-ai/dsh-config-editor": ["./packages/boot/config-editor/src"],
+       "@deepseek-ai/dsh-credentials": ["./packages/credentials/credentials/src"],
+       "@deepseek-ai/dsh-credentials-local": ["./packages/credentials/credentials-local/src"],
++      "@deepseek-ai/dsh-cua-bundle": ["./packages/experimental/cua-bundle/src"],
+       "@deepseek-ai/dsh-deepseek-llm-api-extensions": ["./packages/llm/deepseek-llm-api-extensions/src"],
++      "@deepseek-ai/dsh-deliverable-file-references": ["./packages/deliverables/deliverable-file-references/src"],
+       "@deepseek-ai/dsh-deque": ["./packages/util/deque/src"],
+       "@deepseek-ai/dsh-file-reference": ["./packages/context/file-reference/src"],
+       "@deepseek-ai/dsh-file-reference-local": ["./packages/context/file-reference-local/src"],
+       "@deepseek-ai/dsh-fs": ["./packages/fs/fs/src"],
+       "@deepseek-ai/dsh-fs-local": ["./packages/fs/fs-local/src"],
+       "@deepseek-ai/dsh-fs-observation-policy": ["./packages/fs/fs-observation-policy/src"],
++      "@deepseek-ai/dsh-fs-patch": ["./packages/fs/fs-patch/src"],
+       "@deepseek-ai/dsh-fs-sandbox": ["./packages/fs/fs-sandbox/src"],
+       "@deepseek-ai/dsh-fs-ssh": ["./packages/ssh/fs-ssh/src"],
+       "@deepseek-ai/dsh-goal": ["./packages/goal/goal/src"],
+       "@deepseek-ai/dsh-goal-round-driver": ["./packages/goal/goal-round-driver/src"],
++      "@deepseek-ai/dsh-harness-dev-context": ["./packages/context/harness-dev-context/src"],
+       "@deepseek-ai/dsh-headless": ["./packages/bundle/headless/src"],
+       "@deepseek-ai/dsh-home-paths": ["./packages/util/home-paths/src"],
+       "@deepseek-ai/dsh-hook-protocol": ["./packages/experimental/hook-protocol/src"],
+@@ -418,13 +491,19 @@
+       "@deepseek-ai/dsh-mcp-client": ["./packages/mcp/mcp-client/src"],
+       "@deepseek-ai/dsh-mcp-resources": ["./packages/mcp/mcp-resources/src"],
+       "@deepseek-ai/dsh-message-feedback": ["./packages/feedback/message-feedback/src"],
++      "@deepseek-ai/dsh-message-quotes": ["./packages/session/message-quotes/src"],
+       "@deepseek-ai/dsh-native-command": ["./packages/util/native-command/src"],
+       "@deepseek-ai/dsh-office-to-pdf": ["./packages/document/office-to-pdf/src"],
++      "@deepseek-ai/dsh-official-bundles": ["./packages/util/official-bundles/src"],
+       "@deepseek-ai/dsh-output-retention": ["./packages/util/output-retention/src"],
+       "@deepseek-ai/dsh-package-manifest": ["./packages/util/package-manifest/src"],
+       "@deepseek-ai/dsh-permission-presets": ["./packages/interaction/permission-presets/src"],
+       "@deepseek-ai/dsh-persona": ["./packages/preset/persona/src"],
++      "@deepseek-ai/dsh-personalized-recommendations": ["./packages/experimental/personalized-recommendations/src"],
+       "@deepseek-ai/dsh-plan-mode": ["./packages/plan/plan-mode/src"],
++      "@deepseek-ai/dsh-plugin-detail": ["./packages/util/plugin-detail/src"],
++      "@deepseek-ai/dsh-plugin-market": ["./packages/boot/plugin-market/src"],
++      "@deepseek-ai/dsh-plugin-market-index": ["./packages/util/plugin-market-index/src"],
+       "@deepseek-ai/dsh-plugin-package-inventory-deepseek": ["./packages/llm/plugin-package-inventory-deepseek/src"],
+       "@deepseek-ai/dsh-ptc-runtime": ["./packages/ptc-runtime/ptc-runtime/src"],
+       "@deepseek-ai/dsh-ptc-runtime-node": ["./packages/ptc-runtime/ptc-runtime-node/src"],
+@@ -504,6 +583,8 @@
+       "@deepseek-ai/dsh-tool-bash": ["./packages/shell/tool-bash/src"],
+       "@deepseek-ai/dsh-tool-bash-persistent": ["./packages/shell/tool-bash-persistent/src"],
+       "@deepseek-ai/dsh-tool-cordis": ["./packages/extensions/tool-cordis/src"],
++      "@deepseek-ai/dsh-tool-executor-native": ["./packages/core/tool-executor-native/src"],
++      "@deepseek-ai/dsh-tool-executor-ptc": ["./packages/core/tool-executor-ptc/src"],
+       "@deepseek-ai/dsh-tool-fs": ["./packages/fs/tool-fs/src"],
+       "@deepseek-ai/dsh-tool-fs-search": ["./packages/fs/tool-fs-search/src"],
+       "@deepseek-ai/dsh-tool-goal": ["./packages/goal/tool-goal/src"],
+@@ -529,6 +610,7 @@
+       "@deepseek-ai/dsh-user-questions": ["./packages/interaction/user-questions/src"],
+       "@deepseek-ai/dsh-web": ["./packages/web/web/src"],
+       "@deepseek-ai/dsh-web-app": ["./packages/bundle/web-app/src"],
++      "@deepseek-ai/dsh-web-deepseek-api": ["./packages/web/web-deepseek-api/src"],
+       "@deepseek-ai/dsh-web-fetch-http": ["./packages/web/web-fetch-http/src"],
+       "@deepseek-ai/dsh-web-search-deepseek": ["./packages/web/web-search-deepseek/src"],
+       "@deepseek-ai/dsh-web-search-exa": ["./packages/web/web-search-exa/src"],

@@ -1,0 +1,4 @@
+_XSERVTransSocketUNIXCreateListener: ...SocketCreateListener() failed
+_XSERVTransMakeAllCOTSServerListeners: server already running
+MESA-LOADER: failed to open drm: /usr/lib/gbm/drm_gbm.so: cannot open shared object file: No such file or directory (search paths /usr/lib/gbm, suffix _gbm)
+_amdgpu_device_initialize: amdgpu_query_info(ACCEL_WORKING) failed (-13)

@@ -1,0 +1,1 @@
+{"id":3,"title":"agent-seat-sink","app_id":"human-seat-watch","pid":3556298,"workspace_id":1,"is_focused":true,"is_floating":false,"is_urgent":false,"layout":{"pos_in_scrolling_layout":[2,1],"tile_size":[400.0,300.0],"window_size":[400,300],"tile_pos_in_workspace_view":null,"window_offset_in_tile":[0.0,0.0]},"focus_timestamp":{"secs":61504,"nanos":913981133}}

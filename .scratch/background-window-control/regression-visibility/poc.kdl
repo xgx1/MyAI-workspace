@@ -1,0 +1,15 @@
+input {
+    focus-follows-mouse max-scroll-amount="0%"
+}
+animations { off; }
+hotkey-overlay { skip-at-startup; }
+workspace "human"
+workspace "agent"
+window-rule {
+    match title="^regression-"
+    open-focused false
+}
+window-rule {
+    match title="^regression-agent"
+    open-on-workspace "agent"
+}

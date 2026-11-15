@@ -1,0 +1,6 @@
+input {
+    focus-follows-mouse max-scroll-amount="0%"
+}
+animations { off; }
+hotkey-overlay { skip-at-startup; }
+prefer-no-csd

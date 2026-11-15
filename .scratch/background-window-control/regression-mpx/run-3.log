@@ -1,0 +1,28 @@
+PASS argc==2
+PASS n>0 && !*end
+PASS owned && strspn(owned,"0123456789")==strlen(owned)
+PASS d
+PASS XIQueryVersion(d,&major,&minor)==Success
+SERVER vendor=The X.Org Foundation XI=2.0
+PASS info
+PASS id
+PASS info
+PASS id
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&add,1)==Success
+PASS info
+PASS id
+PASS info
+PASS id
+DEVICES core_pointer=2 core_keyboard=3 agent_pointer=15 agent_keyboard=16
+PASS XISetClientPointer(d,hw,cp)==Success
+PASS XISetClientPointer(d,aw,ap)==Success
+PASS XISetFocus(d,ck,hw,CurrentTime)==Success
+PASS XISetFocus(d,ak,aw,CurrentTime)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS XIGetFocus(d,k,&w)==Success
+PASS focus_of(d,ck)==hw && focus_of(d,ak)==aw
+MEASURED XIWarpPointer core=BadMatch master=BadMatch (Xwayland/satellite 语义；指针与投递由 regression suite 的 XI2 注入路线覆盖)
+PASS XIChangeHierarchy(d,(XIAnyHierarchyChangeInfo*)&rm,1)==Success
+PASS info
+PASS gone
+RESULT PASS: satellite X server isolates per-master focus; pointer warp/key delivery are measured (compositor-gated), and the human/agent key isolation itself is covered by regression suite 10 through XI2 focus injection
