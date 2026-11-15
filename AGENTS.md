@@ -1,6 +1,6 @@
 # AGENTS.md — MyAI 工作区本地约定
 
-通用的 DSH 规则（重启纪律、submodule 机制、技能软链/分组/平台约定、调用语法、代码检索）见用户级 `~/.dsh/AGENTS.md`。本文件只放**这个工作区特有**的路径与仓库事实。
+提交/推送与 submodule 纪律、浏览器、后台窗口与桌面相关规则见用户级 `~/.dsh/AGENTS.md`。本文件只放**这个工作区特有**的路径与仓库事实。
 
 ## 仓库布局
 
@@ -9,10 +9,11 @@
   - `dsh-web-dev.service` → **http://127.0.0.1:3081**，`DSH_HOME=~/.dsh-dev`（sessions/storages 与生产隔离）；启动脚本 `~/.dsh-dev/dsh-web-dev-launch.sh`，unit 权威副本 `~/.dsh/deploy/systemd-user/dsh-web-dev.service`。
   - composition 副本在 `~/.dsh-dev/profiles/web/`：**要调开发实例的组成就改这份**，别改生产的 `~/.dsh/profiles/web/`。
   - 开发循环：worktree 里改代码 → `pnpm run build` → `systemctl --user restart dsh-web-dev.service` → 刷新 3081。
-  - **`~/.dsh-dev` 是 `~/.dsh`（dsh-home 仓）的 git worktree**（orphan 分支 `dev`，2026-11-02 起，已推 origin）：只跟踪开发实例配置层——`profiles/web/*`、`profiles/headless/*`、home 级 `cordis.patch.yml`、`dsh-web-dev-launch.sh`、`skill-filter.yaml`；`sessions/`、`storages/`、`.credentials.yaml`、`node_modules/` 与三个指向生产的软链（`.agent-presets`、`AGENTS.md`、`skills`）由 worktree 里的 `.gitignore` 排除。composition 是**不自动跟随生产的快照**，要同步时整份照搬生产再改 link（2026-11-02 起 dev **不再保留 dev-only 条目**——session-manager/preset-management/web-search-exa/tool-ralph/headless extras 已由用户拍板有意移除，后来者不要「恢复」；**例外**：两个 experimental provider——`@deepseek-ai/dsh-experimental-browser-use-playwright-mcp` 与 `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native`——2026-11-02 晚由用户拍板**声明进 dev 的 `profiles/web/package.json`**（ops 预设按会话挂载它们，未声明时靠 node_modules 遗留软链解析，`pnpm prune`/重装即失效），此条为例外、不在「不要恢复」之列。
-  - **这两个 provider 在 profile 级的条目保持 `disabled: true` 是刻意设计**（2026-11-02 用户拍板）：`~/.dsh/type-presets.yaml` 的 `disable_host` 生成宿主层禁用、只由 ops 预设按会话挂载，避免所有会话都吃 Chromium/CUA 启动成本；宿主层启用会与预设的挂载形成同插件双实例、工具注册可能冲突。后来者不要「恢复」宿主层启用，也不要在没搞清这条前删 `disable_host` 行。
+  - **`~/.dsh-dev` 是 `~/.dsh`（dsh-home 仓）的 git worktree**（orphan 分支 `dev`，2026-11-02 起，已推 origin）：只跟踪开发实例配置层——`profiles/web/*`、`profiles/headless/*`、home 级 `cordis.patch.yml`、`dsh-web-dev-launch.sh`、`skill-filter.yaml`；`sessions/`、`storages/`、`.credentials.yaml`、`node_modules/` 与三个指向生产的软链（`.agent-presets`、`AGENTS.md`、`skills`）由 worktree 里的 `.gitignore` 排除。composition 是**不自动跟随生产的快照**，要同步时整份照搬生产再改 link（2026-11-02 起 dev **不再保留 dev-only 条目**——session-manager/preset-management/web-search-exa/tool-ralph/headless extras 已由用户拍板有意移除，后来者不要「恢复」；**例外**：experimental provider `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native`（playwright-mcp 已于 2026-11-14 按用户要求彻底移除）——2026-11-02 晚由用户拍板**声明进 dev 的 `profiles/web/package.json`**（ops 预设按会话挂载它们，未声明时靠 node_modules 遗留软链解析，`pnpm prune`/重装即失效），此条为例外、不在「不要恢复」之列。
+  - **该 provider 在 profile 级的条目保持 `disabled: true` 是刻意设计**（2026-11-02 用户拍板）：`~/.dsh/type-presets.yaml` 的 `disable_host` 生成宿主层禁用、只由 ops 预设按会话挂载，避免所有会话都吃 Chromium/CUA 启动成本；宿主层启用会与预设的挂载形成同插件双实例、工具注册可能冲突。后来者不要「恢复」宿主层启用，也不要在没搞清这条前删 `disable_host` 行。
   - 同步 recipe：`profiles/web|headless` 的 `cordis.yml`/`cordis.patch.yml`/`package.json`/`pnpm-lock.yaml`、`skill-filter.yaml`、home 级 `cordis.patch.yml` 全部 `cp` 过去，**`package.json` 里 `@deepseek-ai/*` 的 `link:` 路径改回 `deepseek-harness-dev/`**（dev home 没有 `~/.dsh/profiles/node_modules` 共享层，root patch 的 hooks 条目只能走 profile 声明解析，2026-11-02 实况），然后 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline` → `systemctl --user restart dsh-web-dev.service` → 在 `~/.dsh-dev` 里 `git commit` 落 dev 分支。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
+  - **配置层两个 home 必须一起提交、双向同步**（2026-11-15 用户指示）：`~/.dsh`（main）与 `~/.dsh-dev`（dev）是同一仓库的两个 worktree，orphan 分支没有共同祖先、git 无法 merge——同步靠搬文件：两边各自 commit + push，然后按上一条 recipe 把生产配置层搬到 dev（含 `link:` 路径改回 `-dev/`）、各自 profile 里 `pnpm install`、重启 3081 验证。**更新 MyAI（update-all / 拉取代码）时把这一步算进去**；落后判断：`git -C ~/.dsh log --oneline main..dev`（dev 落后）与 `dev..main`（dev 领先）。完整四步见用户级 `~/.dsh/AGENTS.md`「修改位置」节。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
 - **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-11-01 实测 `git submodule status`：vendor 6 个、skills 14 个，共 20 个；clawic-marketplace 与 caveman 两组已于 2026-10-26 删除，vendor/dsh-genui 于 2026-11-01 移除）：
   - `vendor/` = 第三方插件源码，均为生产 `link:` 目标（权威是 `~/.dsh/profiles/*/package.json`）。`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）；`OpenViking`（xgx1 fork）供 `@openviking/dsh-memory-plugin`，dev 与生产 profile 都已 `link:`。**`dsh-ops` 已于 2026-11-10 按用户要求彻底卸载**（依赖、bundle 行、`cordis.patch.yml` 行、pnpm-lock 与 1.3G 本地 checkout 全删，子模块同步从 `.gitmodules` 移除）；fork `xgx1/dsh-ops` 仍在 GitHub（upstream T-Auto/dsh-ops，`LOCAL-PATCHES.md` 记着 Linux 移植改动），要回来的话 `git clone` 后重新加子模块与 profile 行。
@@ -30,6 +31,7 @@
 - 验证开发改动一律走 dev 实例 3081；**不要**拿 3080 当试验台，也不要用重启 `dsh-web.service` 的方式看效果（会中断当前对话）。
 - 真正会影响生产的动作（重启 `dsh-web.service`、改 `~/.dsh` 的生产 composition 或 unit、动 `dsh-extensions` 里被生产 `link:` 的目录）**先问用户**。
 
+<<<<<<< HEAD
 ## DSH home 仓库（`~/.dsh` = `xgx1/dsh-home`）
 
 `~/.dsh` **本身就是 git 仓库**（公开：<https://github.com/xgx1/dsh-home>），只跟踪配置层。
@@ -47,26 +49,30 @@ session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用�
    跨平台解析、hook 分发器、文档修正这类通用改动直接进 `main`，否则下次合并会当冲突。
 
 ## 本地 Laya 决策模型（dev 侧，2026-09-27 接入）
+=======
+## DSH 开发红线
+>>>>>>> c7526fe (AGENTS: 记录 ~/.dsh 与 ~/.dsh-dev 配置层同步要求（2026-11-15 用户指示）)
 
-给 agent 补「快判断」能力：state + 类型化问题（`noul` 是/否、`choice` 选一、`score` 打分）→ 一次前向返回校准概率，不生成文本。
+以下几条都是崩过生产换来的，别删、别绕：
 
-- **模型**：`convaiinnovations/laya`（421M，Apache-2.0，ModernBERT-large 编码器 + 决策头）。权重在 `~/.model/laya/hf`（用 `HF_HOME` 指过去，遵守「模型一律在 `~/.model`」的约定）；venv 在 `~/.local/share/laya/venv`（Python 3.12 + `torch 2.10.0+rocm7.0`，gfx1100 轮子）。
-- **侧车**：`laya-sidecar.service` = `laya-mcp serve --model english --port 8083`，启动脚本 `~/.local/share/laya/run-sidecar.sh`。实测 **18–24 ms/次**（3 问一次前向），空缓存冷启动 82 s、有缓存 9.4 s。
-- **显存**：english + multilingual 常驻约 **5.5 GB**，目前**独占 GPU**（本机已无其他本地模型服务；原先的本地 27B 模型 2026-10-15 弃用且配置已清）。要跑别的本地模型得先 `systemctl --user stop laya-sidecar` 腾显存。
-- **DSH 侧**：npm 插件 `dsh-laya`（v0.1.4）装在 **dev home** 的 `web` 与 `headless` profile 里，`sidecarUrl` 必须在 patch 里覆盖成 `http://127.0.0.1:8083`（插件默认值 8787 是 headroom 的端口）。模型可见工具：`laya_ask`、`laya_plan`。注意：从 profile 目录跑 `node -e "import('dsh-laya')"` 会报 `Cannot find package '@deepseek-ai/dsh-tools'`，**那是误报**——harness 自己解析安装态的 `@deepseek-ai/*`；判据是会话里工具真的出现（headless 实测已出现）。
-- **自检**：`curl -s localhost:8083/health`（看 `degraded`）· `~/.local/share/laya/venv/bin/laya-mcp doctor`（先在 GPU 上真跑一个算子再下结论，别信 `torch.cuda.is_available()`）。
-- **两个坑**：① 侧车必须清 `*_proxy`——`all_proxy=socks5://` 会让 httpx 报 `socksio` 缺失直接拒启（脚本里已 `unset`）；② 上游 english 检查点自带非法温度，启动日志会警告 `Treat confidence from the affected entries as uncalibrated`。
-- **纪律偏差**：这次按「最小闭环」走的是 npm 交付（`dsh plugin add dsh-laya`），不是 ADR-0007 的 fork → submodule → `link:`。要进**生产** profile 前应先补成源码安装。
+- **不许删 `packages/llm/llm/src/index.ts` 里的 `assertNever` 兼容导出**（L54-57，注释写明了保留条件）：外部 turtle-ui TUI 还在从这个包 import；删掉再重建，`dsh tui` 的 import 必挂。等 turtle-ui 迁完再删。
+- **新增插件包必须走完五件套**，漏一步 preset 就起不来：① 包内 `tsconfig.json`（extends 根 `tsconfig.base.json`、`rootDir: src`、`outDir: lib/types`、references 声明依赖）→ ② 根 `tsconfig.host.json` 的 `references` 加引用 → ③ `pnpm run gen-tsconfig-paths` 重生成包别名 → ④ `apps/cli/package.json` 加依赖 + `pnpm install` → ⑤ 全量 `pnpm run build:lib:host` 通过且该包测试通过。**preset 引用了未构建好的包 = 所有用该 preset 的新会话起不来**，而 `omni` 是默认 preset。
+- **包装 provider 时，候选技能上的 `provider` 必须等于外层注册名**：别让内层 provider 顶着旧名字返回数据——名字不匹配会解析到错误的 provider。
+- **更新 CBM（`codebase-memory-mcp`）二进制后必须重启 `codebase-memory.service`**，否则常驻 daemon 握着旧 inode，全线 MCP 请求超时。该 unit 是**用户级**：`systemctl --user restart codebase-memory.service`。
+- **改完 `profiles/` 后，先确认能加载，再重启 `dsh-web.service`**：顺序反了就是先断了当前对话、再发现 preset 加载不了。（`~/.dsh/.agent-presets/` 自 2026-11-13 起不再被加载，改它无效——预设只有 `profiles/web/cordis.patch.yml` 里的 `preset-all` 一个。）
 
-### 判断层：逐轮模型路由（自研，2026-09-27）
+## 技能
 
-- **代码**：`dsh-extensions/plugins/dsh-laya-router`（受 dsh-extensions 版本控制，`link:` 装进 dev home 的 `web` + `headless` profile，bundle 行 `laya-router`）。改完要 `pnpm run build`——加载的是 `lib/`，源码改了不重建会静默跑旧代码。
-- **做什么**：每用户轮次在 `agent/pre-step` 问 Laya 三个 `choice`（难度／时间预算／是否还在原任务上）→ 在 `agent/request` 的 `step === 1` 应用路由与思考档位；判定「换任务 + 上下文 >40%」时在 pre-step 调 `compactIfNeeded(..., 'context-overflow')`。换路由时自己追加 `[model routed: …]` 通知（原生那条只由用户手动切模型触发）。
-- **谁会被路由**：模型选择器里有一组「自动（判断层逐轮选择）」的 `auto` 条目（插件注册的 LLM provider；目录是注册表投影）。**只有选中 `auto` 的会话被路由**，选具体模型就完全听人的；会话没显式选择时看部署默认 `agent-default-model`。旧语义（`live` 时路由所有会话）保留为 `applyWhen: always`。
-- **模式**：`mode: off | shadow | live`，**dev 实例已开 live**（配置在 `~/.dsh-dev/profiles/web/cordis.patch.yml`）。运行时用 `/route shadow|live|off` 切换，持久化在 `$DSH_HOME/laya-router-state.json`（重启仍生效）；`/route status` 看最近一次决策与当前模式，`/route stats [n]` 看路由/依据/压缩/耗时分布，`/route reset` 回到配置默认。
-- **决策日志**：`$DSH_HOME/laya-router.jsonl`（含判断状态裁剪了几条消息、三个答案的置信度、最终路由与依据、侧车耗时）。启动时服务日志会打 `[laya-router] ready (mode=…)` 与 `/route registered …` 两行——**判断 `/route` 有没有挂上就看这两行**（静默失败与正常无法从别处区分）。
-- **设计取舍**：见 `docs/adr/0008`（为什么状态要自己拼、为什么全用 `choice`、为什么先影子）；上游坑与实测数字在插件自己的 README 里；`state`/`policy`/`stats`/`auto-route` 四个模块有 49 个单测（`pnpm test`）。
-- **验收现状**：shadow 与 live 都在 dev home 的 headless profile 上实测过；live 已切到 3081，`model/selection` 会落库（UI 选择器跟着显示路由结果）、路由与档位真的写进 request/header。**长期效果还没观察**——先跑几天，拿 `/route stats` 与 jsonl 对表再决定要不要调路由表。
+- 运行时技能目录 `~/.dsh/skills/` 里**受管技能全是软链，不是副本**；**不要手工往里面复制技能**——副本会与仓库漂移。
+- 技能按上游仓库分组：`<技能源仓>/skills/<上游仓库名>/`。**组内目录与上游一一对应**——组树 = 上游树 + 本地改动移植到对应文件，上游各层级（`skills/<名>/`、`.agents/skills/<名>/`、`plugins/<插件>/skills/<名>/`）原样保留，**不拍平到组根**；分组 README 叫 `README.dsh-local.md`。本地改名只写在 frontmatter 的 `name:` 上，所以技能名不随上游目录名变。
+- **项目专用技能不放主库**：落在各项目自己的 `<项目根>/.dsh/skills/`。
+- **命令的平台约定**：技能里的命令按平台分节——Linux（本机 Arch）用 `bash`、Windows 用 `PowerShell`，代码块语言标记即平台归属，两者不混写在同一段里。只给 PowerShell 的方案一律补 bash 等价（补不了就写明「Linux 上无对应方案＋原因＋可替代做法」，不许编造跑不通的命令）；只有 bash 的方案不必再写 PowerShell 版本。
+
+## 模型目录
+
+- 所有模型（任何项目/工具加载的）一律存放在 `~/.model/<工具或项目名>/`；工具或项目原本的位置只留软链接指回 `~/.model`，实体不入库、不重复拷贝；同一模型的不同量化/版本只保留实际在用的一份（以运行进程、`/proc/<pid>/cwd` 与配置里的引用为准，不靠猜）。
+- 例外（迁不动）：zvec-grep 嵌入模型在 `~/.zvec-grep/models/`；fcitx vinput 的 sherpa-onnx ASR 在 `~/.local/share/vinput/models/`。
+- 本机当前没有本地大模型（2026-10-15 弃用并清空配置）。要重用得先重下权重按上面约定落 `~/.model/`，再往 profile 的 `llm-pi-ai` provider 表加条目。
 
 ## 技能部署
 
@@ -80,16 +86,16 @@ session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用�
 - 待归位的技能（指向本机不存在项目的）暂存在于 `old/`，见 `old/README.md`。
 - `update-app`（CLI + `update-all` 技能）独立仓库位于 `~/projects/update-app`。
 
-## Agent skills
+## Agent 技能
 
-### Issue tracker
+### 问题跟踪（Issue tracker）
 
-Issues live as local markdown files under `.scratch/<feature>/` in this workspace (no remote tracker). See `docs/agents/issue-tracker.md`.
+问题以本地 Markdown 文件落在本工作区的 `.scratch/<feature>/` 下（无远端跟踪器）。见 `docs/agents/issue-tracker.md`。
 
-### Triage labels
+### 分诊标签（Triage labels）
 
-Five canonical triage roles mapped to: `triage`, `info-needed`, `agent-ready`, `human-ready`, `wontfix`. See `docs/agents/triage-labels.md`.
+五个规范分诊角色：`triage`、`info-needed`、`agent-ready`、`human-ready`、`wontfix`。见 `docs/agents/triage-labels.md`。
 
-### Domain docs
+### 领域文档（Domain docs）
 
-Single-context layout: one `CONTEXT.md` + `docs/adr/` at the root. See `docs/agents/domain.md`.
+单上下文布局：根目录一份 `CONTEXT.md` + `docs/adr/`。见 `docs/agents/domain.md`。
