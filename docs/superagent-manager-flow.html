@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>任务台 v2 设计 · 两层管理器</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a; --ink:#e6e8ee; --dim:#98a0b3;
+    --accent:#7aa2f7; --ok:#9ece6a; --warn:#e0af68; --bad:#f7768e; --human:#c099ff;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"Segoe UI","Noto Sans CJK SC",system-ui,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  header{padding:28px 32px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#171a21,#0f1115)}
+  h1{margin:0 0 6px;font-size:22px;letter-spacing:.2px}
+  header p{margin:0;color:var(--dim);max-width:960px}
+  nav{position:sticky;top:0;z-index:9;display:flex;gap:6px;flex-wrap:wrap;padding:10px 32px;background:#0f1115e8;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav a{padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:13px}
+  nav a:hover{color:var(--ink);border-color:var(--accent)}
+  main{padding:24px 32px 80px;max-width:1180px}
+  section{margin:0 0 40px;scroll-margin-top:72px}
+  h2{font-size:17px;margin:0 0 4px}
+  h2 .n{color:var(--accent);font-family:var(--mono);margin-right:8px}
+  .sub{color:var(--dim);font-size:13.5px;margin:0 0 16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .grid{display:grid;gap:12px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.g3,.g4{grid-template-columns:1fr}}
+  .tag{display:inline-block;font:11.5px/1.6 var(--mono);padding:1px 7px;border-radius:6px;border:1px solid var(--line);color:var(--dim)}
+  .tag.human{color:var(--human);border-color:#3a2f5a;background:#241d33}
+  .tag.global{color:var(--accent);border-color:#26374f;background:#141c28}
+  .tag.proj{color:var(--ok);border-color:#2c3a24;background:#161e14}
+  .tag.work{color:var(--warn);border-color:#3d3324;background:#1f1a12}
+  .tag.trig{color:var(--bad);border-color:#3d2530;background:#22151a}
+  .flow{display:grid;gap:10px}
+  .row{display:grid;gap:10px;align-items:stretch}
+  .box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .box h4{margin:0 0 4px;font-size:14px}
+  .box p{margin:0;color:var(--dim);font-size:13px}
+  .down{text-align:center;color:#3a4152;font:14px var(--mono)}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{position:relative;display:grid;grid-template-columns:30px 92px 1fr;gap:12px;padding:11px 12px;border:1px solid transparent;border-radius:10px;cursor:pointer}
+  ol.steps li:hover{background:#171a2155;border-color:var(--line)}
+  ol.steps li.on{background:#1b2130;border-color:var(--accent)}
+  ol.steps li .no{counter-increment:s;font:12px var(--mono);color:var(--dim)}
+  ol.steps li .no::before{content:counter(s,decimal-leading-zero)}
+  ol.steps li .who{font:11.5px/1.7 var(--mono);color:var(--dim)}
+  ol.steps li .what b{color:var(--ink);font-weight:600}
+  ol.steps li .what{font-size:14px}
+  .wire{display:grid;grid-template-columns:210px 1fr 330px;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);min-height:360px}
+  .wire>div{padding:12px 14px;border-right:1px solid var(--line)}
+  .wire>div:last-child{border-right:0}
+  .wtitle{font:12px var(--mono);color:var(--dim);margin-bottom:8px;letter-spacing:.4px}
+  .fitem{padding:6px 9px;border-radius:8px;font-size:13.5px;color:var(--dim);margin-bottom:4px;display:flex;justify-content:space-between}
+  .fitem.on{background:#1b2130;color:var(--ink);outline:1px solid #26374f}
+  .fitem .cnt{font:11.5px var(--mono);color:var(--dim)}
+  .tcard{border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:8px;background:var(--panel2)}
+  .tcard .t{font-size:13.5px}
+  .tcard .m{font:11.5px var(--mono);color:var(--dim);margin-top:3px}
+  .q{border-left:2px solid var(--warn);padding:6px 10px;margin-bottom:8px;background:#1c1913;border-radius:0 8px 8px 0}
+  .q .qt{font-size:13px} .q .qa{font:11.5px var(--mono);color:var(--dim);margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:500;font-size:12.5px}
+  code{font-family:var(--mono);font-size:12.5px;background:#11141a;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .qs{counter-reset:q}
+  .qi{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--panel)}
+  .qi h4{margin:0 0 5px;font-size:14px}
+  .qi h4::before{counter-increment:q;content:"Q" counter(q) " · ";color:var(--warn);font-family:var(--mono);font-size:12.5px}
+  .qi p{margin:0;color:var(--dim);font-size:13.5px}
+  .qi .rec{margin-top:6px;font-size:13px;color:var(--ok)}
+  .note{border-left:3px solid var(--accent);background:#131a26;padding:10px 14px;border-radius:0 10px 10px 0;font-size:13.5px;color:#c8d3e8}
+  .muted{color:var(--dim)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-family:var(--mono)}
+  .pill.new{background:#2a1f38;color:var(--human);border:1px solid #3f3157}
+  .pill.reuse{background:#16231a;color:var(--ok);border:1px solid #2b3f2c}
+  .pill.drop{background:#2a1a1d;color:var(--bad);border:1px solid #412730}
+  footer{color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding:16px 32px}
+</style>
+</head>
+<body>
+<header>
+  <h1>任务台 v2 · 两层管理器</h1>
+  <p>一个和 Super Agent 同级的任务台入口，把「我说一段话 → 任务被派下去 → 卡住时回来找我」这条链路做完整。
+     下面的图是<b>方案</b>，不是已实现的现状 —— 现在只有面板壳、任务记录和 Super Agent 的触发器，管理器那两层还没建。</p>
+</header>
+
+<nav>
+  <a href="#now">1 现在有什么</a>
+  <a href="#arch">2 结构</a>
+  <a href="#flow">3 一次任务的经过</a>
+  <a href="#panel">4 面板长什么样</a>
+  <a href="#roles">5 你做什么 / 它做什么</a>
+  <a href="#reuse">6 复用什么 / 新建什么</a>
+  <a href="#open">7 待你拍板</a>
+  <a href="#v01">8 v0.1 切法</a>
+</nav>
+
+<main>
+
+<section id="now">
+  <h2><span class="n">01</span>现在有什么，缺什么</h2>
+  <p class="sub">先把底账摊开，避免再造一套重复的东西。</p>
+  <div class="grid g4">
+    <div class="card"><span class="pill reuse">已有</span>
+      <h4 style="margin:8px 0 4px;font-size:14px">任务台面板</h4>
+      <p class="muted" style="font-size:13px;margin:0"><code>dsh-task-manager</code>：新建对话框、任务列表、状态徽章、worktree 选择、详情。整区切换主视图。</p></div>
+    <div class="card"><span class="pill reuse">已有</span>
+      <h4 style="margin:8px 0 4px;font-size:14px">触发器 / 准入 / 交付</h4>
+      <p class="muted" style="font-size:13px;margin:0">Super Agent：inbox / github / ci 三种源，两级准入、每单独立 worktree、patch/push/pr 交付、注意力闸门、watchdog。</p></div>
+    <div class="card"><span class="pill reuse">已有</span>
+      <h4 style="margin:8px 0 4px;font-size:14px">会话委派</h4>
+      <p class="muted" style="font-size:13px;margin:0">subagent 服务：<code>startContinuable</code> 带 persona + toolFilter，ADR-0003 就是这么起"队长"的。</p></div>
+    <div class="card"><span class="pill drop">缺</span>
+      <h4 style="margin:8px 0 4px;font-size:14px">管理器 + 入口位置</h4>
+      <p class="muted" style="font-size:13px;margin:0">管理模式预设 2026-10-17 已随 omni/manager 一起删掉；任务台入口现在注入在侧栏标题下面，不是图标行。</p></div>
+  </div>
+  <div class="note" style="margin-top:14px">
+    已有设计资产别浪费：<a href="/home/sx/projects/MyAI/docs/adr/0010-manager-explicit-adoption-and-creation-authority.md">ADR-0010</a> 定了"创建权归管理端"、
+    <a href="/home/sx/projects/MyAI/docs/adr/0011-manager-task-list-as-view.md">ADR-0011</a> 定了"任务清单是纳管会话的视图"、
+    <a href="/home/sx/projects/MyAI/docs/adr/0012-non-blocking-questions.md">ADR-0012</a> 定了"提问不阻塞"、
+    <a href="/home/sx/projects/MyAI/docs/adr/0013-questions-live-on-the-task-card.md">ADR-0013</a> 定了"提问只出现在任务卡片上"。
+    这套语义和你现在说的是一回事，直接沿用。
+  </div>
+</section>
+
+<section id="arch">
+  <h2><span class="n">02</span>结构：两个管理器 + 一个面板</h2>
+  <p class="sub">管理器不干活，只调度；干活的永远是执行会话。</p>
+
+  <div class="flow">
+    <div class="row" style="grid-template-columns:1fr">
+      <div class="box" style="border-color:#3f3157;background:#1d1828">
+        <h4><span class="tag human">你</span> 只在三处出现：派任务 / 答问题 / 拍下一步</h4>
+        <p>其余时间系统自己跑，注意力闸门决定什么时候叫你。</p>
+      </div>
+    </div>
+    <div class="down">↓ 一段文本（粘贴 job 描述也行）</div>
+    <div class="row" style="grid-template-columns:1fr">
+      <div class="box" style="border-color:#26374f;background:#141c28">
+        <h4><span class="tag global">大管理器</span> 全局一个，常驻</h4>
+        <p>听懂你要什么 → 决定这事属于哪个项目 → 找/建那个项目的项目管理器 → 跨项目的取舍也归它（方向、优先级、要不要拆）。它不直接碰代码。</p>
+      </div>
+    </div>
+    <div class="down">↓ 项目内派单（带任务文本 + 绑定哪几个触发器）</div>
+    <div class="row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="box" style="border-color:#2c3a24;background:#161e14">
+        <h4><span class="tag proj">项目管理器</span> 每个项目一个</h4>
+        <p>建执行会话、盯进度、裁决"下一步"、巡查本项目所有触发器是否健康。会休眠，有活才醒。</p>
+      </div>
+      <div class="box">
+        <h4><span class="tag work">执行会话</span> 每张单一个</h4>
+        <p>复用 subagent：独立会话 + 独立 worktree（<code>sa/&lt;ticket&gt;</code> 分支），只干这一件事，不直接对外说话。</p>
+      </div>
+      <div class="box" style="border-color:#3d2530;background:#22151a">
+        <h4><span class="tag trig">触发器</span> 属于项目</h4>
+        <p>inbox / github issue / CI 失败 / 以后 IM、邮件。任务绑哪些源，就算哪些源的事件。项目管理器定时体检它们的连通与配额。</p>
+      </div>
+    </div>
+    <div class="down">↓ 结果、问题、下一步 都回流到这张任务卡片</div>
+    <div class="row" style="grid-template-columns:1fr">
+      <div class="box" style="border-color:#3f3157">
+        <h4><span class="tag human">任务台面板</span> 与 Super Agent 同一层级的入口</h4>
+        <p>筛选列：<b>我的任务</b>（等我动手）· <b>问题</b> · <b>下一步</b> · <b>运行中</b> · <b>全部</b>。问题逐条在卡片上答，答完由项目管理器转给对应执行会话。</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="sub" style="margin-top:18px">三条硬边界（防止做成一锅粥）：</p>
+  <div class="grid g3">
+    <div class="card"><b style="font-size:13.5px">管理器只读不写代码</b><p class="muted" style="font-size:13px;margin:4px 0 0">管理模式的工具面里没有文件写入、没有 shell 副作用，避免它和 Worker 抢同一个仓库。</p></div>
+    <div class="card"><b style="font-size:13.5px">问题不阻塞</b><p class="muted" style="font-size:13px;margin:4px 0 0">提问落成一条待答项，执行会话当场用临时方案继续；你答复之后，受影响的部分按答复重做（ADR-0012）。</p></div>
+    <div class="card"><b style="font-size:13.5px">管理器不直接问你</b><p class="muted" style="font-size:13px;margin:4px 0 0">它的提问工具变成占位，只回"问题在任务卡片上"（ADR-0013），免得同一个问题问两遍。</p></div>
+  </div>
+</section>
+
+<section id="flow">
+  <h2><span class="n">03</span>一次任务的经过</h2>
+  <p class="sub">点任意一行看它落在谁身上；颜色 = 谁来负责这一步。</p>
+  <div class="card">
+    <ol class="steps" id="steps">
+      <li data-who="human"><span class="no"></span><span class="who">你</span><span class="what">把一段文本丢进任务台「指派任务」，可顺手指定项目（不指定就让系统判断）。</span></li>
+      <li data-who="global"><span class="no"></span><span class="who">大管理器</span><span class="what">判断项目归属；该项目还没有项目管理器就<b>创建一个</b>（ADR-0010：创建权只在管理端）。</span></li>
+      <li data-who="proj"><span class="no"></span><span class="who">项目管理器</span><span class="what">把这段文本拆成一张任务卡片：目标、验收、<b>绑定哪些触发器</b>、预算上限、交付方式（默认 patch）。</span></li>
+      <li data-who="proj"><span class="no"></span><span class="who">项目管理器</span><span class="what">起一个执行会话（subagent + 独立 worktree），把任务简报和工具面裁好交给它。</span></li>
+      <li data-who="work"><span class="no"></span><span class="who">执行会话</span><span class="what">干活；过程中产生的"我要继续做 X"和"这里有个问题"都记到任务卡片上，<b>同时用临时方案继续跑</b>。</span></li>
+      <li data-who="trig"><span class="no"></span><span class="who">触发器</span><span class="what">期间到达的相关事件（CI 挂了、issue 有人回）直接进这个执行会话的线程，不再重复过一遍准入。</span></li>
+      <li data-who="proj"><span class="no"></span><span class="who">项目管理器</span><span class="what">裁决每个回流项：能自己定的就回「继续，按你推荐且保险的方式做」，并把理由写进卡片；定不了的才升级到你那。</span></li>
+      <li data-who="human"><span class="no"></span><span class="who">你</span><span class="what">在任务台的「问题 / 下一步」筛选列里逐条处理，一次一条，不打断别的事。</span></li>
+      <li data-who="work"><span class="no"></span><span class="who">执行会话</span><span class="what">按你的答复重做受影响的部分，交付 patch（或 push / PR），把回执回贴来源线程。</span></li>
+      <li data-who="proj"><span class="no"></span><span class="who">项目管理器</span><span class="what">关单；同时按周期巡查：本项目所有触发器是否还活着、配额是否见底、有没有反复失败的单。</span></li>
+    </ol>
+  </div>
+  <p class="sub" style="margin-top:12px">第 7 步是这套设计的关键：<b>"推荐且保险"不是一句口号，得是规则</b> —— 例如只允许 patch 交付、不碰受保护分支、不改别人的仓库配置、预算用完就停手。规则的默认集我们 v0.1 先定死，不给项目管理器自由发挥。</p>
+</section>
+
+<section id="panel">
+  <h2><span class="n">04</span>面板长什么样</h2>
+  <p class="sub">入口挪到侧栏图标行（插件 / 自动化任务 / Super Agent / <b>任务台</b>），点开整区切换成下面这个三栏，不是左侧栏里再点一层。</p>
+  <div class="wire">
+    <div>
+      <div class="wtitle">筛选列</div>
+      <div class="fitem on">我的任务 <span class="cnt">3</span></div>
+      <div class="fitem">问题 <span class="cnt">2</span></div>
+      <div class="fitem">下一步 <span class="cnt">1</span></div>
+      <div class="fitem">运行中 <span class="cnt">4</span></div>
+      <div class="fitem">等待触发器 <span class="cnt">1</span></div>
+      <div class="fitem">全部 <span class="cnt">12</span></div>
+      <div class="wtitle" style="margin-top:16px">触发器健康</div>
+      <div class="fitem">inbox <span class="pill reuse">ok</span></div>
+      <div class="fitem">github · issue <span class="pill recycle" style="background:#2a1f38;color:#c099ff;border:1px solid #3f3157">未配</span></div>
+      <div class="fitem">ci · webhook <span class="pill recycle" style="background:#2a1f38;color:#c099ff;border:1px solid #3f3157">未配</span></div>
+    </div>
+    <div>
+      <div class="wtitle">任务卡片</div>
+      <div class="tcard"><div class="t">登录页 375px 按钮被遮挡</div><div class="m">执行中 · 2 个问题待答 · inbox</div></div>
+      <div class="tcard"><div class="t">给 README 补 Linux 依赖说明</div><div class="m">等你定下一步 · patch 已生成</div></div>
+      <div class="tcard"><div class="t">CI 失败自动排查：main 分支</div><div class="m">已完成 · 交付 patch · 30 分钟</div></div>
+      <div class="tcard"><div class="t">周报数据核对</div><div class="m">等待触发器 · github issue #12</div></div>
+      <div class="muted" style="font-size:12.5px;margin-top:10px">顶部固定一个「指派任务」输入框：贴一段文本就建单。</div>
+    </div>
+    <div>
+      <div class="wtitle">详情 · 问题列表（逐条处理）</div>
+      <div class="q"><div class="qt">Q1 响应式断点用 375 还是 360？两者在现有测试里都出现。</div><div class="qa">推荐 375（与设计稿一致）· <b>等你答</b></div></div>
+      <div class="q"><div class="qt">Q2 修好后要不要顺带改按钮间距？会影响另两页。</div><div class="qa">推荐：不动 · <b>等你答</b></div></div>
+      <div class="wtitle" style="margin-top:14px">下一步（项目管理器已裁决）</div>
+      <div class="q" style="border-left-color:var(--ok);background:#141c16"><div class="qt">继续：补齐窄屏下的截图证据，再交 patch。</div><div class="qa">按推荐方式执行 · 你可覆写</div></div>
+      <div class="wtitle" style="margin-top:14px">绑定触发器 / 预算</div>
+      <div class="muted" style="font-size:12.5px">inbox（主）· 每小时 12 单 · 单轮 30 分钟 · 交付 patch</div>
+    </div>
+  </div>
+</section>
+
+<section id="roles">
+  <h2><span class="n">05</span>你做什么 / 它做什么</h2>
+  <div class="grid g3">
+    <div class="card"><span class="tag human">你</span>
+      <ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">
+        <li>贴一段文本派任务（可指定项目）</li>
+        <li>逐条答任务卡片上的问题</li>
+        <li>需要时覆写项目管理器给的"下一步"</li>
+      </ul></div>
+    <div class="card"><span class="tag proj">项目管理器</span>
+      <ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">
+        <li>拆单、绑触发器、定预算</li>
+        <li>起执行会话、裁工具面</li>
+        <li>裁决回流项：继续 / 升级给你</li>
+        <li>巡查本项目的触发器与失败单</li>
+      </ul></div>
+    <div class="card"><span class="tag work">执行会话</span>
+      <ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px">
+        <li>在独立 worktree 里干活</li>
+        <li>问题与下一步都回报，不等答复</li>
+        <li>交付 patch / push / PR，回贴来源</li>
+      </ul></div>
+  </div>
+  <p class="sub" style="margin-top:12px">注意力预算：一个项目同时最多 <b>1 条</b>"需要你"的提醒；同一张单没新进展就静默。你不在线时整条线继续跑，不因提问停摆。</p>
+</section>
+
+<section id="reuse">
+  <h2><span class="n">06</span>复用什么 / 新建什么</h2>
+  <table>
+    <thead><tr><th style="width:26%">能力</th><th style="width:12%">性质</th><th>落点</th></tr></thead>
+    <tbody>
+      <tr><td>面板三栏 + 任务卡片 + 状态</td><td><span class="pill reuse">复用</span></td><td><code>dsh-extensions/plugins/dsh-task-manager/src/client/index.tsx</code>（现在注入在侧栏标题下，要改成图标行同款）</td></tr>
+      <tr><td>任务事实源</td><td><span class="pill new">要定</span></td><td>沿用 ADR-0011：纳管会话为事实源、清单是视图；还是改存 Super Agent 的工单库 —— <b>二选一，见 Q3</b></td></tr>
+      <tr><td>触发器、准入、worktree、交付、watchdog</td><td><span class="pill reuse">复用</span></td><td><code>extensions/dsh-super-agent/lib/{engine.js,sources/,delivery/}</code>；任务卡只引用 source 键</td></tr>
+      <tr><td>执行会话</td><td><span class="pill reuse">复用</span></td><td><code>ctx.subagents.startContinuable</code> + per-child <code>persona</code> / <code>toolFilter</code>（ADR-0003 的先例）</td></tr>
+      <tr><td>非阻塞提问</td><td><span class="pill reuse">复用</span></td><td>ADR-0012 / 0013 的语义，落成任务卡片上的一条待答项</td></tr>
+      <tr><td>管理模式预设</td><td><span class="pill new">新建</span></td><td><code>~/.dsh-dev/profiles/web/cordis.patch.toml</code> 里加一条 preset（邻近 <code>id = "preset-all"</code>）：只含 persona / 指令 / 只读工具 / 管理工具，无写入与 shell 副作用</td></tr>
+      <tr><td>大管理器 + 项目管理器</td><td><span class="pill new">新建</span></td><td>会话层：一个全局会话 + 每项目一个；创建权、纳管范围按 ADR-0010</td></tr>
+      <tr><td>问题列表 / 下一步筛选</td><td><span class="pill new">新建</span></td><td>面板新增两列 + 数据字段，答复动作走管理器的转发</td></tr>
+      <tr><td>项目定义</td><td><span class="pill new">要定</span></td><td>用 workspace 记录还是仓库路径 —— <b>见 Q1</b></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="open">
+  <h2><span class="n">07</span>待你拍板（拍完我就照这个做）</h2>
+  <p class="sub">这几条不定，做出来就会返工。绿色是我的建议。</p>
+  <div class="qs">
+    <div class="qi"><h4>"项目"用什么定义？</h4><p>决定项目管理器的边界和触发器归属。三种候选：DSH 工作区记录、git 仓库根路径、你手写的项目清单。</p><div class="rec">建议：git 仓库根路径为主键，工作区只是它的一个视图入口。</div></div>
+    <div class="qi"><h4>项目管理器是常驻会话，还是按需创建 + 休眠？</h4><p>常驻 = 一直在上下文里，成本高但反应快；按需 = 省钱但要冷启动。</p><div class="rec">建议：按需创建，空闲 30 分钟休眠，唤醒走"项目内有新事件"。</div></div>
+    <div class="qi"><h4>任务事实源放哪？</h4><p>ADR-0011 说清单是纳管会话的视图；Super Agent 却自带工单库（<code>storages/super-agent</code>）。两套并存就会出现"同一个单两个状态"。</p><div class="rec">建议：一张单只有一个 owner —— 交给 Super Agent 的工单库，面板做视图；ADR-0011 的那条修订为新 ADR。</div></div>
+    <div class="qi"><h4>触发器归属：属于任务还是属于项目？</h4><p>你说"任务会关联相关触发器"，但巡查和配额又天然按项目算。</p><div class="rec">建议：配置挂项目（谁读谁的凭据、配额按项目算），任务只声明"我要订阅哪几个"。</div></div>
+    <div class="qi"><h4>"推荐且保险的方式"的边界谁来定？</h4><p>如果让项目管理器自己判断，它迟早会决定 push 代码或改别人的仓库。</p><div class="rec">建议：v0.1 硬编码一份允许清单（只 patch、不 push/PR、不碰受保护分支、不跨仓库），要放宽得改配置并留痕。</div></div>
+    <div class="qi"><h4>大管理器 v0.1 必须存在吗？</h4><p>它的作用是判断项目归属和跨项目取舍；如果一开始只有一个项目，它几乎没活干。</p><div class="rec">建议：v0.1 先用一条"文本 → 项目"的规则代替它，等真有两个项目在建了再接大管理器，避免一上来就要处理它的上下文成本。</div></div>
+  </div>
+</section>
+
+<section id="v01">
+  <h2><span class="n">08</span>v0.1 切法（只做能立刻手测的那层）</h2>
+  <div class="grid g3">
+    <div class="card"><b style="font-size:13.5px">做</b>
+      <ul style="margin:8px 0 0;padding-left:18px;font-size:13px">
+        <li>入口挪到图标行，整区面板</li>
+        <li>「指派任务」建单 → 建一个项目管理器会话</li>
+        <li>项目管理器拆单 + 起执行会话（复用 Super Agent 的 worktree/交付）</li>
+        <li>问题与下一步落到卡片，两列筛选 + 逐条答复</li>
+      </ul></div>
+    <div class="card"><b style="font-size:13.5px">不做</b>
+      <ul style="margin:8px 0 0;padding-left:18px;font-size:13px">
+        <li>大管理器（先用规则代替，见 Q6）</li>
+        <li>触发器巡查的自动修复（先只报健康状态）</li>
+        <li>push / PR 交付（保持 patch）</li>
+        <li>跨项目调度、优先级、预算仲裁</li>
+      </ul></div>
+    <div class="card"><b style="font-size:13.5px">验收（一条就够）</b>
+      <p class="muted" style="font-size:13px;margin:6px 0 0">在任务台贴一段文本 → 出现一张卡片 → 项目管理器起了执行会话并改了代码 → 卡片上出现 1 条问题 → 你答完 → 交付 patch，全程不用开别的页面。</p></div>
+  </div>
+</section>
+
+</main>
+<footer>设计稿 v1 · 2026-11-16 · 只在 3081（dev 实例）落地；面板与 Super Agent 同进程，同源同 token。</footer>
+<script>
+  const steps = [...document.querySelectorAll('#steps li')];
+  steps.forEach(li => li.addEventListener('click', () => {
+    steps.forEach(o => o.classList.remove('on'));
+    li.classList.add('on');
+  }));
+  // 颜色编码：谁在哪一步
+  const who = { human:'#c099ff', global:'#7aa2f7', proj:'#9ece6a', work:'#e0af68', trig:'#f7768e' };
+  steps.forEach(li => { li.querySelector('.who').style.color = who[li.dataset.who] || '#98a0b3'; });
+</script>
+</body>
+</html>
