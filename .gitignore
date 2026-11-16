@@ -22,3 +22,5 @@ node_modules/
 .zvec-grep/
 docs/notes/freellmapi-dsh-runbook.md
 docs/notes/freellmapi-key-onboarding.md
+/.scratch/agent-config/
+/.scratch/dsh-superagent/
