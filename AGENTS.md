@@ -9,11 +9,11 @@
   - `dsh-web-dev.service` → **http://127.0.0.1:3081**，`DSH_HOME=~/.dsh-dev`（sessions/storages 与生产隔离）；启动脚本 `~/.dsh-dev/dsh-web-dev-launch.sh`，unit 权威副本 `~/.dsh/deploy/systemd-user/dsh-web-dev.service`。
   - composition 副本在 `~/.dsh-dev/profiles/web/`：**要调开发实例的组成就改这份**，别改生产的 `~/.dsh/profiles/web/`。
   - 开发循环：worktree 里改代码 → `pnpm run build` → `systemctl --user restart dsh-web-dev.service` → 刷新 3081。
-  - **`~/.dsh-dev` 是 `~/.dsh`（dsh-home 仓）的 git worktree**（orphan 分支 `dev`，2026-11-02 起，已推 origin）：只跟踪开发实例配置层——`profiles/web/*`、`profiles/headless/*`、home 级 `cordis.patch.yml`、`dsh-web-dev-launch.sh`、`skill-filter.yaml`；`sessions/`、`storages/`、`.credentials.yaml`、`node_modules/` 与三个指向生产的软链（`.agent-presets`、`AGENTS.md`、`skills`）由 worktree 里的 `.gitignore` 排除。composition 是**不自动跟随生产的快照**，要同步时整份照搬生产再改 link（2026-11-02 起 dev **不再保留 dev-only 条目**——session-manager/preset-management/web-search-exa/tool-ralph/headless extras 已由用户拍板有意移除，后来者不要「恢复」；**例外**：experimental provider `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native`（playwright-mcp 已于 2026-11-14 按用户要求彻底移除）——2026-11-02 晚由用户拍板**声明进 dev 的 `profiles/web/package.json`**（ops 预设按会话挂载它们，未声明时靠 node_modules 遗留软链解析，`pnpm prune`/重装即失效），此条为例外、不在「不要恢复」之列。
+  - **`~/.dsh-dev` 是 `~/.dsh`（dsh-home 仓）的 git worktree**（orphan 分支 `dev`，2026-11-02 起，已推 origin）：只跟踪开发实例配置层——`profiles/web/*`、`profiles/headless/*`、home 级 `cordis.patch.yml`、`dsh-web-dev-launch.sh`；`sessions/`、`storages/`、`.credentials.yaml`、`node_modules/` 与三个指向生产的软链（`.agent-presets`、`AGENTS.md`、`skills`）由 worktree 里的 `.gitignore` 排除。composition 是**不自动跟随生产的快照**，要同步时整份照搬生产再改 link（2026-11-02 起 dev **不再保留 dev-only 条目**——session-manager/preset-management/web-search-exa/tool-ralph/headless extras 已由用户拍板有意移除，后来者不要「恢复」；**例外**：experimental provider `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native`（playwright-mcp 已于 2026-11-14 按用户要求彻底移除）——2026-11-02 晚由用户拍板**声明进 dev 的 `profiles/web/package.json`**（ops 预设按会话挂载它们，未声明时靠 node_modules 遗留软链解析，`pnpm prune`/重装即失效），此条为例外、不在「不要恢复」之列。
   - **该 provider 在 profile 级的条目保持 `disabled: true` 是刻意设计**（2026-11-02 用户拍板）：`~/.dsh/type-presets.yaml` 的 `disable_host` 生成宿主层禁用、只由 ops 预设按会话挂载，避免所有会话都吃 Chromium/CUA 启动成本；宿主层启用会与预设的挂载形成同插件双实例、工具注册可能冲突。后来者不要「恢复」宿主层启用，也不要在没搞清这条前删 `disable_host` 行。
-  - 同步 recipe：`profiles/web|headless` 的 `cordis.yml`/`cordis.patch.yml`/`package.json`/`pnpm-lock.yaml`、`skill-filter.yaml`、home 级 `cordis.patch.yml` 全部 `cp` 过去，**`package.json` 里 `@deepseek-ai/*` 的 `link:` 路径改回 `deepseek-harness-dev/`**（dev home 没有 `~/.dsh/profiles/node_modules` 共享层，root patch 的 hooks 条目只能走 profile 声明解析，2026-11-02 实况），然后 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline` → `systemctl --user restart dsh-web-dev.service` → 在 `~/.dsh-dev` 里 `git commit` 落 dev 分支。
+  - 同步 recipe：`profiles/web|headless` 的 `cordis.yml`/`cordis.patch.yml`/`package.json`/`pnpm-lock.yaml`、home 级 `cordis.patch.yml` 全部 `cp` 过去，**`package.json` 里 `@deepseek-ai/*` 的 `link:` 路径改回 `deepseek-harness-dev/`**（dev home 没有 `~/.dsh/profiles/node_modules` 共享层，root patch 的 hooks 条目只能走 profile 声明解析，2026-11-02 实况），然后 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline` → `systemctl --user restart dsh-web-dev.service` → 在 `~/.dsh-dev` 里 `git commit` 落 dev 分支。
   - 依赖装不上时先看 registry：本机 `registry.npmjs.org` 不通，用 `pnpm install --registry=https://registry.npmmirror.com --prefer-offline`。
-  - **配置层两个 home 必须一起提交、双向同步**（2026-11-15 用户指示）：`~/.dsh`（main）与 `~/.dsh-dev`（dev）是同一仓库的两个 worktree，orphan 分支没有共同祖先、git 无法 merge——同步靠搬文件：两边各自 commit + push，然后按上一条 recipe 把生产配置层搬到 dev（含 `link:` 路径改回 `-dev/`）、各自 profile 里 `pnpm install`、重启 3081 验证。**更新 MyAI（update-all / 拉取代码）时把这一步算进去**；落后判断：orphan 分支没有共同祖先、`rev-list` 计数无意义，直接比内容 `git -C ~/.dsh diff --stat main dev -- profiles/ cordis.patch.yml skill-filter.yaml`（差异应只剩 `link:` 的 `-dev/` 行与 dev 独有的 `dsh-web-dev-launch.sh`）。完整四步见用户级 `~/.dsh/AGENTS.md`「修改位置」节。
+  - **配置层两个 home 必须一起提交、双向同步**（2026-11-15 用户指示）：`~/.dsh`（main）与 `~/.dsh-dev`（dev）是同一仓库的两个 worktree，orphan 分支没有共同祖先、git 无法 merge——同步靠搬文件：两边各自 commit + push，然后按上一条 recipe 把生产配置层搬到 dev（含 `link:` 路径改回 `-dev/`）、各自 profile 里 `pnpm install`、重启 3081 验证。**更新 MyAI（update-all / 拉取代码）时把这一步算进去**；落后判断：orphan 分支没有共同祖先、`rev-list` 计数无意义，直接比内容 `git -C ~/.dsh diff --stat main dev -- profiles/ cordis.patch.yml`（差异应只剩 `link:` 的 `-dev/` 行与 dev 独有的 `dsh-web-dev-launch.sh`）。完整四步见用户级 `~/.dsh/AGENTS.md`「修改位置」节。
 - **`dsh-extensions/`** —— 单检出（分支 `main`）：`plugins/`（自研，受本仓版本控制）与 `skills/` 是生产 `link:` 的目标。
 - **`dsh-extensions/vendor/` 与 `dsh-extensions/skills/` 都是 git submodule**（2026-11-01 实测 `git submodule status`：vendor 6 个、skills 14 个，共 20 个；clawic-marketplace 与 caveman 两组已于 2026-10-26 删除，vendor/dsh-genui 于 2026-11-01 移除）：
   - `vendor/` = 第三方插件源码，均为生产 `link:` 目标（权威是 `~/.dsh/profiles/*/package.json`）。`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）；`OpenViking`（xgx1 fork）供 `@openviking/dsh-memory-plugin`，dev 与生产 profile 都已 `link:`。**`dsh-ops` 已于 2026-11-10 按用户要求彻底卸载**（依赖、bundle 行、`cordis.patch.yml` 行、pnpm-lock 与 1.3G 本地 checkout 全删，子模块同步从 `.gitmodules` 移除）；fork `xgx1/dsh-ops` 仍在 GitHub（upstream T-Auto/dsh-ops，`LOCAL-PATCHES.md` 记着 Linux 移植改动），要回来的话 `git clone` 后重新加子模块与 profile 行。
@@ -31,13 +31,12 @@
 - 验证开发改动一律走 dev 实例 3081；**不要**拿 3080 当试验台，也不要用重启 `dsh-web.service` 的方式看效果（会中断当前对话）。
 - 真正会影响生产的动作（重启 `dsh-web.service`、改 `~/.dsh` 的生产 composition 或 unit、动 `dsh-extensions` 里被生产 `link:` 的目录）**先问用户**。
 
-<<<<<<< HEAD
 ## DSH home 仓库（`~/.dsh` = `xgx1/dsh-home`）
 
 `~/.dsh` **本身就是 git 仓库**（公开：<https://github.com/xgx1/dsh-home>），只跟踪配置层。
 **不要另建一份 `.dsh`**：新设备、新工作区、别的 agent 一律 clone 这份仓库（或把 `DSH_HOME` 指向
 clone 出来的目录）；手工拷配置、自己建空 home、拿别的目录当 home 都会与主库漂移，合并时丢凭据引用与
-session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用技能，**不是** home。
+session 布局。`<项目根>/.dsh/` 只放项目专用技能，**不是** home。
 
 分支约定（完整命令见 `~/.dsh/README.md`「多机：分支约定」）：
 
@@ -49,9 +48,8 @@ session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用�
    跨平台解析、hook 分发器、文档修正这类通用改动直接进 `main`，否则下次合并会当冲突。
 
 ## 本地 Laya 决策模型（dev 侧，2026-09-27 接入）
-=======
+
 ## DSH 开发红线
->>>>>>> c7526fe (AGENTS: 记录 ~/.dsh 与 ~/.dsh-dev 配置层同步要求（2026-11-15 用户指示）)
 
 以下几条都是崩过生产换来的，别删、别绕：
 
@@ -79,7 +77,7 @@ session 布局。`<项目根>/.dsh/` 只放项目层技能过滤与项目专用�
 - `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、**任意深度项目下的** `<项目>/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
 - 源①的跳过规则：跳过 `tests/`/`fixtures/`/`examples/`/`sample*` 噪音并打印跳过清单；同名副本取路径最浅者，故 `skills/`、`.agents/skills/` 优先于分发副本。技能目录 = 含 `SKILL.md` 的目录，**不限深度**。
 - 源③ 2026-10-12 起也是递归 `find`（旧版单层 `~/projects/*/.dsh/skills/` glob 会漏 `ps-tool/anim/.dsh/skills/` 这类嵌套项目，四个 anime 技能曾长期靠手工软链），并排除 `*/snapshots/*`（DSH 快照夹具里放的是测试用假技能）。
-- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时把名字加进 `~/.dsh/skill-filter.yaml` 的 allow 面（2026-10-26 起该文件是**白名单制**：只有列名的技能进模型 catalog，公共技能默认禁；项目级 `MyAI/.dsh/skill-filter.yaml` 同规则、优先级更高）并重启会话。
+- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时把名字加进 `~/.dsh/agent-configs.yaml` 里对应 config 的 `skills:`（2026-11-15 起三样可见性全由 agent-configs 决定：`skills:` 白名单、`mcp:` 服务器白名单、`tools:` 工具白名单；个人层/项目层 `skill-filter.yaml` 已全部删除，别再造）并重启会话。
 
 ## 本工作区
 
