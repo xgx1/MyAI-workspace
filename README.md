@@ -32,7 +32,6 @@
 | `docs/functional/`、`docs/manual-tests/` | 功能说明与人工测试用例 | 是 |
 | `docs/agents/` | Issue tracker、triage 标签、领域文档布局的约定 | 是 |
 | `.scratch/` | 本地 issue tracker（无远程 tracker）+ 实验场。只留三个：`background-window-control/`（scoped 输入回归夹具）、`context-overflow-recovery/`（ADR 0009 的可复跑 A/B 台）、当前在建的那个实验 | 部分是 |
-| `old/` | 已删除技能的结论存档：5 个指向不存在项目的技能于 2026-11-17 删除，只剩 `old/README.md` 的检索证据 | 是 |
 | `deepseek-harness-dev/` | DSH 开发 worktree（同一 `.git` 的 dev 分支），开发实例 3081 跑它 | 否 |
 | `browser-control/` | 浏览器访问链路试验场：`captcha-solver` 的独立克隆（自带 `.git`），用完即删 | 否 |
 | `.zvec-grep/` | zvec-grep 的工作区索引，`zg index --rebuild` 可再生 | 否 |

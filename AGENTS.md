@@ -82,7 +82,7 @@ session 布局。`<项目根>/.dsh/` 只放项目专用技能，**不是** home�
 
 ## 本工作区
 
-- 待归位的技能（指向本机不存在项目的）暂存在于 `old/`，见 `old/README.md`。
+- **不设暂存区**：技能指向的项目不存在了就删（正文在 git 历史里），不攒 `old/` 这类抽屉——`old/` 已于 2026-11-17 清空删除，5 个技能正文见 `git log --before=2026-11-17 -- old/`。
 - `update-app`（CLI + `update-all` 技能）独立仓库位于 `~/projects/update-app`。
 
 ## Agent 技能
