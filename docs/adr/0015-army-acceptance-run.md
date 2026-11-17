@@ -298,6 +298,45 @@ army-4、army-5、army-10 也都是先撞 401 再靠 `ego_script` 一锤子做�
 3. **项目管理器空转轮询**（PD 只有 `task_*` 没有 bash，于是反复 `task_list` 直到触发重复调用提醒，拖长耗时）
    → 项目管理器 persona 加一句「起了执行会话就结束这一轮，执行会话干完会自己把回报写回卡片」。
 
+## 第二轮（2026-11-17 14:00–14:35，用户三点要求）
+
+用户原话要点：①提高 ego 的并发；②重启后 token 不再变；③要有专门的地方展示所有任务台，
+并且**不能把一切都塞进「未分组」**——按实际情况建工作区，管理器有单独的文件夹和工作区。
+
+### 1. 工作区分层（"未分组"清零）
+
+根因：DSH 的分组只有工作区一层，会话的 header cwd 必须**等于**某个工作区的 path 才挂得进去；
+而任务台原来把会话塞在 `<DSH_HOME>/task-manager/{console,exec}` 这种临时目录里，一个工作区都没建。
+
+现状：
+
+- **任务台·管理器**（`<DSH_HOME>/task-manager/console`）：大管理器 + 各项目项目管理器，一个工作区。
+- **每个任务一个工作区**（path = 它自己的 worktree，标题「项目 · 任务」）：执行会话挂在这里。
+- 执行会话的 cwd 因此从固定的 `exec` 座位改成它自己的工作区目录；**建会话之前**先把路径写进
+  `task-manager/seats.json` 并重跑 `~/.dsh/bin/agent-configs.py`（生成器认这个文件，发 `core` + `task-exec`），
+  否则新 worktree 不在白名单里，那个会话一个工具都没有。
+- 历史会话用一次性脚本 `~/.dsh/bin/migrate-workspaces.py` 按 header cwd 归位：dev 实例 **+110 个会话**
+  分进 8 个工作区（任务台·管理器 56、任务台·执行位 24、sx 14、deepseek-harness-dev 6、System 6…），
+  「未分组」在侧栏里消失了。写文件前先备份 `workspace.json.bak.*`。
+
+### 2. 固定入口 token
+
+`packages/host/authentication-token/src/browser-auth.ts` 的 `processLaunchToken` 原来每进程随机；
+现在读 `DSH_WEB_TOKEN`。dev 启动脚本从**不入库**的 `~/.dsh-dev/.web-token` 读出来导出（repo 是公开的），
+实测连着重启两次 token 完全相同。生产实例要用同一个改动得重新构建 + 重启 `dsh-web.service`（会断当前对话），**等用户点头**。
+
+### 3. 任务台总览
+
+面板筛选行加了「按项目」：每个任务台一行 —— 项目名、路径、各状态计数（待测试/进行中/问题/已完成）、
+最近一张卡与时间；点一行就只看该项目的任务。截图 `~/.dsh/tmp/panel-by-project.png`。
+
+### 4. ego 并发
+
+现象是同一站点标签页攒到二十几个后渲染进程被拖死（`Page.navigate`/`Runtime.evaluate` 全超时）。
+本轮做的是**止损**，不是根治：`~/.dsh/bin/ego-tab-janitor.mjs` 经 CDP 数 3080/3081 的标签页，
+超过 6 个就关最旧的，`ego-janitor.timer` 每 3 分钟跑一次（`--dry-run` 可预演，`EGO_TAB_MAX` 可调）。
+真正的根治是给 agent 一个**自己的浏览器/渲染进程预算**，而不是全挂用户共享的 Helium —— 那要改 ego 的接入方式，留待决策。
+
 ### 仍未修（环境/设计层面，需要单独决策）
 
 - **ego 并发半死**（30 个同站点标签 → 渲染进程被拖死、`page` 跟随最新标签、空间被回收）：这是 ego 与浏览器侧的问题，不是任务台能修的。
