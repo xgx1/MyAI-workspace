@@ -98,7 +98,12 @@
    `task-console` 被抹掉、全部分配器会话零工具）。
 7. **`dotnet run --project . -- 8108` 在无人 TTY 的后台起不来**（无日志、不监听）。同目录里已经构建好的
    `bin/Debug/net11.0/CsSquare.dll` 直接 `dotnet <dll> 8108` 正常。项目没问题，是我的验收方式需要按语言分别写。
-8. **项目管理器爱刷 `task_list`**：一次收尾里连刷 8 次不同过滤条件（`in-progress`/`waiting-check`/空），
+8. **两个任务工具的运行期 bug（已修，提交 `0f7b86b`）**：army-10 实测 `task_assign` 抛
+   `subagents.startContinuable is not a function`（宿主给了对象、方法没有）、`task_create` 因返回体多带
+   `runMode`/`dispatchRound` 被 `additionalProperties: false` 校验拒掉。前者改成 `DELIVERY_UNAVAILABLE` 并指路
+   `task_dispatch_project`，后者补投影并加了"键集必须等于 schema"的断言。
+
+9. **项目管理器爱刷 `task_list`**：一次收尾里连刷 8 次不同过滤条件（`in-progress`/`waiting-check`/空），
    既慢又吵。→ 建议：简报里点明"不要轮询任务列表，卡片状态由 `task_*` 工具返回"。
 
 9. **dev 实例重启一次，所有已打开标签页静默失效。** 鉴权 cookie 名字里带 token（`dsh-auth-<token>`），重启即换 token，
@@ -126,6 +131,14 @@
 - 系统**没问过它任何问题**（无「问题」卡、无「等待回复」），所以答复入口它一次也没用过——一半原因是这套系统现在**只在出错时才说话**。
 - 它的判断："卡在项目管理器会话结束后没人关单"，与我上面第 1 条一致。
 
+army-2（Node / js-sum）——**零交付**：
+
+- 它在 3081 上等了近 50 分钟，一次需求都没发出去：面板先是「加载中…」一分半，然后一直挂着
+  「管理插件未在此实例运行，当前显示本地任务列表」，Super Agent 面板同时报「连接失败」。
+- 它的空间被回收（`task space not found: army-2`）、标签页反复变 `about:blank`，
+  `ego_snapshot` 报 `snapshot returned no content after retries`、截图整页纯白。
+- 它的判断与我上面「污染实验」那条一致：不是需求做不了，是它拿到的系统在它面前一直断线。
+
 army-4（Rust / rs-fib）补充：
 
 - 它同样走完了面板（09:30 与 09:52 各派一次，第二次是重复派单），**系统一个问题都没问过它**。
@@ -140,6 +153,16 @@ army-5（C / c-prime）补充：
   提交 `d30ae0a`，边界验过 `n=18→false`、`n=2→true`、`n=0/1→false`、`n=abc→400`、`/foo→404`、`POST→405`。
   我复跑：`make` 通过，`./server 8105` → `n=17` 得裸 `true`、`n=18` 得 `false` ✅（比我早先那张卡返回 JSON 更贴需求）。
 - 它记录的版本号在 `0.2.2-rc.3-2ab485f-dirty` 与 `…-8edfcb2` 之间来回跳——那就是我这一轮为了修 bug 反复重启 dev 的痕迹。
+
+### 一条对我自己不利的结论：这轮验收我污染了实验
+
+跑的过程中我为修 bug 重启了 dev 实例 **6 次以上**，每次换 token，于是**所有旅成员打开着的标签页瞬间 401**。
+它们的证词高度一致：面板顶部出现「管理插件未在此实例运行，当前显示本地任务列表」（`managedUnavailable` 兜底文案）、
+Super Agent 面板「连接失败 / Host 尚未返回状态」。army-2 因此**一张卡都没派出去**（它在面板里等了近 50 分钟），
+army-4、army-5、army-10 也都是先撞 401 再靠 `ego_script` 一锤子做完才成功。
+
+结论：**"边跑边改"和"让不知情的 agent 用系统"是互斥的**。要测可用性，就得先把系统冻住；
+要边跑边改，就得接受旅成员看到的是一个一直在断线的系统。这两件事不能混在一轮里做。
 
 ### 我破的规矩（记在这里，不藏）
 
