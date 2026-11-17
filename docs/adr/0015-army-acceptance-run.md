@@ -174,6 +174,26 @@ army-3（TS / ts-upper）——零派单，但把"界面冻死"和"我重启"的
   我核过这两个接口的服务端耗时：`/context` 4ms、`/state` 1ms——不是接口慢，是渲染进程当时已经卡死。
 - 最后 3081 整个实例 `ERR_CONNECTION_REFUSED`，它间隔轮询 6 分钟没恢复——那正是我为了修 bug 重启的窗口期。
 
+army-7（Java / java-echo）——**活干完了，卡却卡着**，把"回报桥没接"这条钉死了：
+
+- 它 11:23 派单，项目管理器起了执行会话 `e70a24e5`；执行会话 11:26 收尾，原文写着
+  `java Main 8107` → `listening on http://127.0.0.1:8107/echo?text=x`，`curl` → `x`，产物 `Main.java`（90 行）、
+  分支 `task/f9b50243`、提交 `4f8db7c`、patch + verify.log，还测了 `%20`、中文、缺 `text`→400、`POST`→405。
+- 卡片却一直显示「尚无队长回报」，因为它只认"在项目目录 `java-echo` 里跑的对话"，而执行会话跑在
+  `java-echo-f9b50243` 这个 worktree 里 → **回报永远对不上**。
+- 我复跑：`java-echo-f9b50243` 里 `java Main 8107` → `x` ✅；另一张旧卡的 `java-echo-5a8b499f` 也是 `x` ✅。
+
+army-6（C++ / cpp-rev）——它报的"没产出"**是误判**，但误判的原因恰恰是系统缺陷：
+
+- 它的项目管理器在 11:48 把卡片置为 `problem`，理由是"两次执行会话 `7dd37b0d`/`1c3fe1f9` 都没真正开跑、
+  nudge 报 `has not been dispatched to a captain`、启动阶段卡在 `waiting for sandboxPolicy`"。
+- 我查了那两个会话的落盘：**都跑完了**（`7dd37b0d` 201 行、`1c3fe1f9` 122 行，末事件都是
+  `turn/end reason=completed`）。它的 worktree `cpp-rev-1bf3c745` 里有 `server.cpp`、`Makefile`、`evidence/`，
+  提交 `d9256c6 test: record acceptance evidence for GET /rev?text=abc`；我复跑 `./server 8106` → `cba` ✅。
+- 两个真问题被这次误判暴露出来：①`task_nudge` 是**队长流程**的工具，任务台派单建出来的卡没有 captain，
+  nudge 必然报错——项目管理器把这条**工具用错了的报错**当成了"执行会话没起来"的证据；
+  ②没有回报桥时，项目管理器会把"我看不到进度"升级成"任务受阻"，**把人骗去修根本没坏的东西**。
+
 army-4（Rust / rs-fib）补充：
 
 - 它同样走完了面板（09:30 与 09:52 各派一次，第二次是重复派单），**系统一个问题都没问过它**。
