@@ -2,7 +2,7 @@
 
 > 情报日期 **2026-09-20**。所有条目要么标注来源，要么标注"未核实"。
 > 免费额度是按月变动的活数据，**投产前必须用自己账号的控制台核账**。
-> 原始分报告：[cn-llm-free-api-quota-2026-09-20.md](./cn-llm-free-api-quota-2026-09-20.md)（国内 29 家）、[overseas-free-api-tiers.md](../../.scratch/llm-free-api-2026/overseas-free-api-tiers.md)（海外主力 + 长尾 30 余家）、[research.md](../../.scratch/free-llm-api/research.md)（渠道与风险）。
+> 原始分报告：[cn-llm-free-api-quota-2026-09-20.md](./cn-llm-free-api-quota-2026-09-20.md)（国内 29 家）、[overseas-free-api-tiers-2026-09-20.md](./overseas-free-api-tiers-2026-09-20.md)（海外主力 + 长尾 30 余家）、[free-llm-api-channels-2026-09-20.md](./free-llm-api-channels-2026-09-20.md)（渠道与风险）。
 
 ## 0. 先看结论
 

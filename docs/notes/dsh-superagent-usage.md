@@ -189,7 +189,7 @@ gh-agent api user --jq .login       # 打印它的 login，superagent 就是这�
 
 ## 本机已经做过的验证（可复现）
 
-在 `.scratch/dsh-superagent/checkout` 留了一份克隆：
+当时在 `.scratch/dsh-superagent/checkout` 留了一份克隆（该目录已于 2026-11-17 删除，下面是当初的跑法）：
 
 ```powershell
 cd C:\Users\Admin\Project\MyAI\.scratch\dsh-superagent\checkout

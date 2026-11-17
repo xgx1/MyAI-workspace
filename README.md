@@ -31,12 +31,11 @@
 | `docs/plans/`、`docs/notes/`、`docs/research/` | 实现计划、调研笔记、实验记录（含 fork 分歧） | 是 |
 | `docs/functional/`、`docs/manual-tests/` | 功能说明与人工测试用例 | 是 |
 | `docs/agents/` | Issue tracker、triage 标签、领域文档布局的约定 | 是 |
-| `.scratch/` | 本地 issue tracker（无远程 tracker）+ 一次性实验场；其中只有 `background-window-control/`（scoped 输入回归夹具）要长期留 | 部分是 |
-| `old/` | 指向本机不存在项目的技能暂存区（见 `old/README.md`） | 是 |
+| `.scratch/` | 本地 issue tracker（无远程 tracker）+ 实验场。只留三个：`background-window-control/`（scoped 输入回归夹具）、`context-overflow-recovery/`（ADR 0009 的可复跑 A/B 台）、当前在建的那个实验 | 部分是 |
+| `old/` | 已删除技能的结论存档：5 个指向不存在项目的技能于 2026-11-17 删除，只剩 `old/README.md` 的检索证据 | 是 |
 | `deepseek-harness-dev/` | DSH 开发 worktree（同一 `.git` 的 dev 分支），开发实例 3081 跑它 | 否 |
 | `browser-control/` | 浏览器访问链路试验场：`captcha-solver` 的独立克隆（自带 `.git`），用完即删 | 否 |
 | `.zvec-grep/` | zvec-grep 的工作区索引，`zg index --rebuild` 可再生 | 否 |
-| 根目录 `dsh-tool-stats.html`、`focus-schemes.html`、`lmarena-pareto.png`、`perf-mode-after.png` | 一次性分析产物（工具用量统计、焦点方案、跑分图），无代码引用 | 是，待清理 |
 
 命名约定：顶层目录一律**纯小写、单词间用横线**（子模块沿用各自上游的仓库名，不为了整齐去改——改子模块路径要动 `.gitmodules`，别的机器拉取后得手工 `submodule sync`）。
 

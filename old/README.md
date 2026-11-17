@@ -1,6 +1,8 @@
-# old/ — 等待归位的技能
+# old/ — 已删除技能的结论存档
 
-这里的技能**不参与任何迁移或整理操作**，只是暂存。
+> **2026-11-17：5 个技能目录已删，只留这张表。**它们指向的项目至今不存在，留着只是让下一个翻新的人再全盘搜一遍。要找回正文：`git log --oneline -- old/` 里 2026-11-17 之前的提交。
+
+当初的划分：
 
 ## 为什么在这里
 
@@ -12,12 +14,9 @@
 | `media-convert-defaults` | Sx.Cli | 全盘零命中 |
 | `batch-file-organizing` | FileOrganizer | 全盘零命中 |
 
-## 什么时候把它们取出来
+## 当初的取用规则（技能已删，规则仍适用）
 
-- 找到对应项目的源码之后（优先按 `unrealcli-*` → UnrealCli、`media-convert-defaults` → Sx.Cli、`batch-file-organizing` → FileOrganizer 归位）
-- 或者项目确认不再需要时，直接删除
-
-取出后的去处：按 2026-08-26 的《UE 技能整理方案》原则——**项目专属技能应落在各项目 workspace 的 `.dsh/skills/`**，而不是回到主技能库。
+项目若重新出现，从 git 历史取回正文，按 `unrealcli-*` → UnrealCli、`media-convert-defaults` → Sx.Cli、`batch-file-organizing` → FileOrganizer 归位。去处：按 2026-08-26 的《UE 技能整理方案》原则——**项目专属技能应落在各项目 workspace 的 `.dsh/skills/`**，而不是回到主技能库。
 
 ## 背景
 
