@@ -149,6 +149,21 @@ army-9（Perl / pl-len）——同为零交付，但给出了最具体的性能�
 - `ego_script` 的 `page` 跟随"最新活动标签"，被别人抢焦点后它就评估到别人的标签上（返回 `n = 0`）——
   这是**共用一个浏览器时工具语义本身**的问题，不是成员不会用。
 
+army-8（C# / cs-square）——零交付，但把"渲染线程被拖死"钉了个时间线：
+
+- 它 09:07 拿到的标签页本来是好的（侧栏有 Super Agent / 任务管理，主区还能看到别的成员的
+  `task_list` / `task_start_execution`），**一点「任务管理」主区就变「加载中…」、状态条转成「连接中断，正在重试」，
+  随后整个渲染进程无响应**：`Runtime.evaluate`（连 `location.href` 都超时）、`Page.navigate`、`Page.captureScreenshot` 全超时。
+- 之后换 `localhost:3081`、新开空间、新标签，一律卡在 `about:blank`；一次标题出来了但
+  `document.body.innerText.length === 0`（文档在、React 没渲染）；最后一张标签直接
+  `ERR_CONNECTION_REFUSED`，同期 `GET /` 已恢复 401——说明"活着但界面起不来"。
+- 它排除了自身空间问题：同一空间打开 `http://127.0.0.1:5293/story/` 秒开，同站点只有 3081 挂。
+- 证据截图它留在 `/tmp/army8-task-console.png`、`/tmp/army8-reload.png`、`/tmp/army8-now.png`。
+
+**我核过面板自身没有无限循环**：`src/client/index.tsx` 只有一处 `useEffect(() => { void refresh() }, [refresh])`，
+没有轮询定时器，没有 effect 里 setState 的闭环——所以"点面板就死"不是面板的锅，是整个 SPA 在
+30 个同站点标签 + 20 多张卡下被拖垮（army-9 的 40s 冷启动数据佐证）。
+
 army-4（Rust / rs-fib）补充：
 
 - 它同样走完了面板（09:30 与 09:52 各派一次，第二次是重复派单），**系统一个问题都没问过它**。
