@@ -7,3 +7,6 @@
 [submodule "modelscope-cli"]
 	path = modelscope-cli
 	url = https://github.com/xgx1/modelscope-cli.git
+[submodule "dsh-Go"]
+	path = dsh-Go
+	url = https://github.com/xgx1/dsh-Go.git

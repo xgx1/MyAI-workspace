@@ -19,6 +19,7 @@
   - `vendor/` = 第三方插件源码，均为生产 `link:` 目标（权威是 `~/.dsh/profiles/*/package.json`）。`billion-context` 是 `xgx1` fork（origin=fork、upstream=上游 ranxianglei/billion-context）；`OpenViking`（xgx1 fork）供 `@openviking/dsh-memory-plugin`，dev 与生产 profile 都已 `link:`。**`dsh-ops` 已于 2026-11-10 按用户要求彻底卸载**（依赖、bundle 行、`cordis.patch.yml` 行、pnpm-lock 与 1.3G 本地 checkout 全删，子模块同步从 `.gitmodules` 移除）；fork `xgx1/dsh-ops` 仍在 GitHub（upstream T-Auto/dsh-ops，`LOCAL-PATCHES.md` 记着 Linux 移植改动），要回来的话 `git clone` 后重新加子模块与 profile 行。
   - `skills/` = 技能分组仓，一个上游仓库一组。组树 = 上游树 + 本地改动移植。详见 `docs/adr/0006`。
   - 改它们要在**各自目录里**提交、推送，再回 `dsh-extensions` 更新指针；本仓只保存指针。两者都不被 `.gitignore` 忽略（见 `docs/adr/0005`）。
+- **`dsh-Go/`** —— submodule（`xgx1/dsh-Go`，上游 `ccch1mneyyy/dsh-Go` 未配 remote）：Android 客户端 App（Flutter 原生界面 + 纯 Dart 客户端 + PRoot 里打补丁的 DSH 引擎），2026-11-17 按用户要求并入本工作区。钉在 `local-main` 分支（快照提交 `267ddf6d`；fork 的 `main` 比它旧，别在那儿找）。**在那个目录里做事先读它自己的 `AGENTS.md`**：不接受外部 PR、不 commit/push 除非当次要求、手机操控/PRoot/更新安装类改动必须真机验证。与 `deepseek-harness` 没有共享历史、互不依赖。
 - 位置纪律与动手前确认流程见用户级 `~/.dsh/AGENTS.md`「修改位置」节；本工作区先例复盘：`docs/plans/manager-task-orchestration.md`「经验教训」节。
 
 ## DSH 改动落点（默认只改 worktree）
