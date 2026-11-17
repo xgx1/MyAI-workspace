@@ -298,6 +298,35 @@ army-4、army-5、army-10 也都是先撞 401 再靠 `ego_script` 一锤子做�
 3. **项目管理器空转轮询**（PD 只有 `task_*` 没有 bash，于是反复 `task_list` 直到触发重复调用提醒，拖长耗时）
    → 项目管理器 persona 加一句「起了执行会话就结束这一轮，执行会话干完会自己把回报写回卡片」。
 
+## 第三轮（2026-11-17 15:00–15:40，两条反馈）
+
+用户反馈：①"做的这套好像没有和 Super Agent 控制台融合，两边没有任何关系"；②"有很多进行中的任务，
+但完全没有任何会话在处理他们"。
+
+### ② 假的"进行中"——对账器
+
+原先卡片只要起过执行会话就写 `in-progress`，执行会话结束却没回报（army 全程如此）就永远停在"进行中"。
+新增 `reconcile()`：对每张 `in-progress` 的卡，
+
+1. 有 `report` → 直接转 `waiting-check`；
+2. 执行会话在 10 分钟内还活动 → 不动；
+3. 工作区分支有提交 → 转 `waiting-check`，回报里写分支与提交；
+4. 没提交但有未提交改动 → 同样转 `waiting-check`（Worker 常只写文件不提交）；
+5. 什么都没有 → 自动重起一次执行会话（`autoRetries` 上限 1），再不行转 `problem`。
+
+定时每 3 分钟跑，另有 `POST /plugins/dsh-task-manager/reconcile`。第一次实跑：`examined 20 → 14 转待测试、
+4 重起、1 受阻`；现在卡片分布是 23 待测试 / 3 未开始 / 3 受阻 / 3 完成 / 1 进行中。
+
+### ① 与 Super Agent 融合（用户选定方案 B：派单交给它执行）
+
+- `startExecution` 先调用 Super Agent 的 `POST /api/super-agent/command {command:'dispatch', args:{title, brief, cwd}}`，
+  Worker 就在任务的 worktree 里干活；卡片记 `superAgentWorkerId`。宿主机这次调用用 `DSH_WEB_TOKEN` 换 cookie 过认证。
+- 面板筛选行显示 Super Agent 状态（health / 准入模式 / 路由决策数，取自 `/api/super-agent/state`）。
+- **踩到的坑**：它当前派出来的 Worker 是 `simulated: true`（`sessionId` 为空、2 秒"做完"、一个文件都不写），
+  即使在 `accept` 模式下也一样。所以派单后要回读状态判断 `simulated`，是就**退回任务台自己的执行会话**，
+  否则卡片看起来有人干、实际什么都没发生。实测回退：`greet-web` 卡由真执行会话产出 `app.py` 并回报 `waiting-check`。
+- 副作用：`mode` 被我切成了 `accept`（为了测真实 Worker），Super Agent 现在会接收准入事件。
+
 ## 第二轮（2026-11-17 14:00–14:35，用户三点要求）
 
 用户原话要点：①提高 ego 的并发；②重启后 token 不再变；③要有专门的地方展示所有任务台，
