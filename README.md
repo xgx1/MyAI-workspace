@@ -11,7 +11,8 @@
 | 路径 | 远端 | 是什么 |
 |---|---|---|
 | `deepseek-harness/` | [xgx1/deepseek-harness](https://github.com/xgx1/deepseek-harness) | DSH 本体（`deepseek-ai/deepseek-harness` 的 fork）。生产 Web 实例就跑在这份检出上 |
-| `dsh-extensions/` | [xgx1/dsh-extensions](https://github.com/xgx1/dsh-extensions) | 扩展宿主，自管 16 个子模块：`vendor/` 第三方插件 + `skills/` 技能分组仓 |
+| `dsh-extensions/` | [xgx1/dsh-extensions](https://github.com/xgx1/dsh-extensions) | 扩展宿主，自管 20 个子模块：`vendor/` 第三方插件 + `skills/` 技能分组仓 |
+| `dsh-Go/` | [xgx1/dsh-Go](https://github.com/xgx1/dsh-Go) | Android 客户端（Flutter + PRoot 里的 DSH 引擎）；与 DSH 本体无共享历史，改动前先读它自己的 `AGENTS.md` |
 
 `update-app` 位于工作区之外（`~/projects/update-app`），因此不是本仓的子模块。
 
@@ -19,16 +20,25 @@
 
 ## 本仓内容
 
-| 路径 | 作用 |
-|---|---|
-| `AGENTS.md` | 工作区级 Agent 规则：开发位置、子模块纪律、技能部署 |
-| `CONTEXT.md` | 领域术语表，分「任务编排」「仓库拓扑」两节，每个词带 _Avoid_ 别名 |
-| `INSTALL.md` | 全栈安装 / 新设备恢复指南，Linux 与 Windows 各一套 |
-| `docs/adr/` | 架构决策记录 0001–0007 |
-| `docs/plans/`、`docs/notes/` | 实现计划与调研笔记（含 fork 分歧记录） |
-| `docs/agents/` | Issue tracker、triage 标签、领域文档布局的约定 |
-| `old/` | 指向本机不存在项目的技能暂存区 |
-| `.scratch/` | 本地 issue tracker（无远程 tracker） |
+一个顶层条目只有三种身份：**入库的工作区资产**、**子模块**（见上表）、**不入库的本地工作区**（可再生或临时）。没有第四种，说不清归哪一类的就是该删的。
+
+| 路径 | 作用 | 入库 |
+|---|---|---|
+| `AGENTS.md` | 工作区级 Agent 规则：开发位置、子模块纪律、技能部署 | 是 |
+| `CONTEXT.md` | 领域术语表，分「任务编排」「仓库拓扑」两节，每个词带 _Avoid_ 别名 | 是 |
+| `INSTALL.md` | 全栈安装 / 新设备恢复指南，Linux 与 Windows 各一套 | 是 |
+| `docs/adr/` | 架构决策记录 0001–0015 | 是 |
+| `docs/plans/`、`docs/notes/`、`docs/research/` | 实现计划、调研笔记、实验记录（含 fork 分歧） | 是 |
+| `docs/functional/`、`docs/manual-tests/` | 功能说明与人工测试用例 | 是 |
+| `docs/agents/` | Issue tracker、triage 标签、领域文档布局的约定 | 是 |
+| `.scratch/` | 本地 issue tracker（无远程 tracker）+ 一次性实验场；其中只有 `background-window-control/`（scoped 输入回归夹具）要长期留 | 部分是 |
+| `old/` | 指向本机不存在项目的技能暂存区（见 `old/README.md`） | 是 |
+| `deepseek-harness-dev/` | DSH 开发 worktree（同一 `.git` 的 dev 分支），开发实例 3081 跑它 | 否 |
+| `browser-control/` | 浏览器访问链路试验场：`captcha-solver` 的独立克隆（自带 `.git`），用完即删 | 否 |
+| `.zvec-grep/` | zvec-grep 的工作区索引，`zg index --rebuild` 可再生 | 否 |
+| 根目录 `dsh-tool-stats.html`、`focus-schemes.html`、`lmarena-pareto.png`、`perf-mode-after.png` | 一次性分析产物（工具用量统计、焦点方案、跑分图），无代码引用 | 是，待清理 |
+
+命名约定：顶层目录一律**纯小写、单词间用横线**（子模块沿用各自上游的仓库名，不为了整齐去改——改子模块路径要动 `.gitmodules`，别的机器拉取后得手工 `submodule sync`）。
 
 ## 从哪里读起
 
@@ -51,7 +61,7 @@
 
 ## 克隆
 
-两个子模块与它们的下一层子模块（共 18 个远端）均为公开仓库，未登录即可递归克隆：
+三个子模块与 `dsh-extensions` 的下一层子模块（共 23 个远端）均为公开仓库，未登录即可递归克隆：
 
 ```bash
 git clone --recurse-submodules https://github.com/xgx1/MyAI-workspace.git

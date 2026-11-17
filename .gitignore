@@ -24,3 +24,7 @@ docs/notes/freellmapi-dsh-runbook.md
 docs/notes/freellmapi-key-onboarding.md
 /.scratch/agent-config/
 /.scratch/dsh-superagent/
+
+# 临时：浏览器访问链路的试验场（2026-11-17 建，用完连目录带这一行一起删）。
+# 里面是 captcha-solver 的独立克隆（自己的 .git + origin），不登记为 submodule。
+/browser-control/
