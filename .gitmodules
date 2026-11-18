@@ -7,3 +7,15 @@
 [submodule "dsh-Go"]
 	path = dsh-Go
 	url = https://github.com/xgx1/dsh-Go.git
+[submodule "repos/niri"]
+	path = repos/niri
+	url = /home/sx/projects/gitserver/niri.git
+[submodule "repos/smithay"]
+	path = repos/smithay
+	url = /home/sx/projects/gitserver/smithay.git
+[submodule "repos/agent-desktop"]
+	path = repos/agent-desktop
+	url = /home/sx/projects/gitserver/agent-desktop.git
+[submodule "repos/agent-seat-probe"]
+	path = repos/agent-seat-probe
+	url = /home/sx/projects/gitserver/agent-seat-probe.git
