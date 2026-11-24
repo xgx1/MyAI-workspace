@@ -78,7 +78,7 @@ session 布局。`<项目根>/.dsh/` 只放项目专用技能，**不是** home�
 - `dsh-extensions/install-skill.sh` 是安装/更新的唯一入口：递归扫描 `dsh-extensions/skills/`、`~/projects/update-app/skills/`、**任意深度项目下的** `<项目>/.dsh/skills/` 三源，把技能目录软链到 `~/.dsh/skills/`。覆盖真实目录需 `--force`（先备份到 `~/.dsh/skill-backups/`），`--dry-run` 预演。
 - 源①的跳过规则：跳过 `tests/`/`fixtures/`/`examples/`/`sample*` 噪音并打印跳过清单；同名副本取路径最浅者，故 `skills/`、`.agents/skills/` 优先于分发副本。技能目录 = 含 `SKILL.md` 的目录，**不限深度**。
 - 源③ 2026-10-12 起也是递归 `find`（旧版单层 `~/projects/*/.dsh/skills/` glob 会漏 `ps-tool/anim/.dsh/skills/` 这类嵌套项目，四个 anime 技能曾长期靠手工软链），并排除 `*/snapshots/*`（DSH 快照夹具里放的是测试用假技能）。
-- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装了新技能若还要让**模型**看得见，需同时把名字加进 `~/.dsh/agent-configs.yaml` 里对应 config 的 `skills:`（2026-11-15 起三样可见性全由 agent-configs 决定：`skills:` 白名单、`mcp:` 服务器白名单、`tools:` 工具白名单；个人层/项目层 `skill-filter.yaml` 已全部删除，别再造）并重启会话。
+- 自检：`--dry-run` 输出里「新建 N」应为 0，否则有技能没被纳入受管源。装好重启会话，**模型立刻看得见全部技能**——2026-11-24 起已停掉按项目白名单治理（`agent-configs` / `ui-agent-config` 在 `profiles/web/cordis.patch.toml` 里 `disabled = true`，个人层 `skill-filter.yaml` 全禁层已移走），别再往 `~/.dsh/agent-configs.yaml` 加东西。
 
 ## 本工作区
 
