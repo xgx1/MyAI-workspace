@@ -515,6 +515,29 @@ bash ~/Project/MyAI/dsh-extensions/install-skill.sh
 ② 管理员身份跑 Git Bash；③ 退回复制（`install-skill.sh --list` 打印每个技能的源目录，逐个 `Copy-Item -Recurse`）——
 复制即副本，改完技能要重复制，是下策。
 
+**Windows 上没有 ps-tool**：`update-all` 的 CLI + 技能 2026-11-17 并进了 ps-tool（只在 Linux 生产机，
+`/mnt/Video2/ps-tool`，无公开远端），所以脚本的「源 2」在 Windows 上是空的——用户侧表现为
+**没有 `/update-all` 命令**。2026-11-24 起 `install-skill.sh` 在缺 ps-tool 时回落到
+`~/projects/update-app/skills`（`UPDATE_APP_ROOT` 可覆盖），但**必须先把 update-app 检出到那**：
+
+```bash
+git clone https://github.com/xgx1/update-app.git ~/projects/update-app
+cd ~/projects/update-app && git checkout windows      # 本机 applist.toml 在 windows 分支
+```
+
+CLI 也要自举一次（技能里 W2 从 `bin/current.json` 的 `exe` 起）：
+
+```bash
+cd ~/projects/update-app && dotnet run --project update-app.csproj -c Release -- self --config applist.toml
+```
+
+```powershell
+$exe = (Get-Content "$env:USERPROFILE\Project\update-app\bin\current.json" -Raw | ConvertFrom-Json).exe
+& $exe validate --config "$env:USERPROFILE\Project\update-app\applist.toml"   # 期望 0 个错误
+```
+
+ps-tool 那批技能（`update-all` 以外的）在 Windows 上装不了，属预期；不要用副本去补。
+
 **hooks 需要 bash**：`~/.dsh/cordis.patch.toml` 里的 hooks 桥用 `bash -c` 起 node（ponytail / caveman 的上下文注入就走这条）。
 所以 Windows 上 **Git Bash 必须在 PATH 里**：装 Git 默认只给快捷方式、不进 PATH，要把 `<Git>\bin\bash.exe` 所在的 `bin` 目录加进用户 PATH。
 不加也不影响 DSH 启动，只是两个技能钩子静默不生效。
@@ -618,7 +641,10 @@ profile 里的 MCP 客户端是 `failOnStartupError: false`——**命令不存�
 | Windows：`git submodule` 又卡在 `repos/*` | 同上，URL 指向本机 gitserver | §5.2 只初始化三个路径 |
 | Windows：PowerShell 里 `dsh web` 立即退出 | 用了 `powershell.exe` 但 PATH 里没有 `dsh.cmd` | 用 `%~dp0` 绝对路径或重开终端；确认 `dsh.cmd` 在 `~\.local\bin` |
 | Windows：ponytail / caveman 不进上下文 | hooks 桥用 `bash -c`，Windows 上没有 bash | 把 Git 的 `bin` 目录加进 PATH（§5.5）；或临时禁用 hooks 条目 |
-| Windows：中文/emoji 在日志里乱码 | 控制台编码 | `chcp 65001`，或让计划任务把输出写文件（`dsh-web-launch.ps1 -Service`） |
+| Windows：中文/emoji 在日志里乱码 | 控制台编码 | `chcp 65001`，或让计划任务把输出写文件（`dsh-web-launch.ps1 -Service`，用 `Out-File -Encoding utf8`；`*>>` 默认写 UTF-16LE，`grep`/`tail` 看到的是乱码） |
+| Windows：网页端**新建会话失败**，控制台报 `agent-preset/invalid: <插件>: never started` | `preset-all` 的插件清单里有一个子插件起不来（多半是它的 `lib/` 没构建，或锁的是旧 harness API）→ 整个预设判 invalid，建会话直接 500 级失败 | 先看 `--dump-config` 里该条目是否还在；要么把它构建出来，要么从 `preset-all` 的 `[[entry.insert.config.plugins]]` 里删掉那一行（本机 2026-11-24：`dsh-blender-plugin` 锁 harness 0.1.x 的 `ToolRegistry`，0.2.2 已删该导出，重建必然 typecheck 失败）；改完重启服务 |
+| Windows：日志里反复刷 `The system cannot find the path specified.` / MCP server 一启动就退出 | DSH 在 Windows 上经 `cmd /d /s /c` 起 stdio MCP server，且**把每个参数各自加引号**，子命令成了字面量 `"server"` → `zg` 报 `Unknown command: "server"` → 客户端无限重连 | 把子命令 + flag 收进 `.cmd` 垫片，profile 里 `command = "zg-mcp"`、`args = []`（本机垫片在 `~/.dsh/bin/zg-mcp.cmd`，启动器把 `~/.local/bin` 放进 PATH）。带 args 的 server（如 `rea mcp`）同理 |
+| `pnpm install` 之后 `node_modules` 里的 link 指向不存在的路径 | `profiles/*/package.json` 的 `link:` 仍是绝对路径，而工作区不在那台机器的规范位置上 | 2026-11-24 起 `link:` 是 **相对** `~/.dsh/profiles/<name>/` 三层向上的 `../../../projects/MyAI/…`；只要工作区在 `~/projects/MyAI`（Windows `%USERPROFILE%\Project\MyAI`，NTFS 大小写不敏感）就无需改写。改了 `link:` 一定要重跑 `pnpm install` |
 | `nub: command not found` / `nubx` 不认识 | nub 没装或不在 PATH | `curl -fsSL https://nubjs.com/install.sh \| bash`，把 `~/.nub/bin` 加进 PATH |
 | `nub install` 拒跑某个依赖的 install 脚本 | nub 默认拒绝 install scripts | 在 `package.json#allowScripts` 放行后 `nub ci` |
 | 启动报 `X did not activate` / `ERR_MODULE_NOT_FOUND` | nub 的 hoisted 布局让 `~/.dsh/profiles/node_modules` 里指向 `apps/cli/node_modules/...` 的旧软链全部悬空 | `find ~/.dsh/profiles/node_modules -xtype l` 列出后，改指到 `deepseek-harness/node_modules/@deepseek-ai/<name>`（第三方包指 `deepseek-harness/node_modules/<name>`） |
