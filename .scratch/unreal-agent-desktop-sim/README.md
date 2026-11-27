@@ -50,6 +50,13 @@
    `Existing instance is the same age or newer` 就退出，窗口不会出现——脚本里先检测再跑，
    否则会把输入打进屋主的旧实例、日志却写进新文件（实测踩过，误判成"输入没生效"）。
 
+9. **键盘按「焦点」投递，不按 scoped pin 投递**（与鼠标相反）：`scoped-target` 钉住窗口后
+   鼠标事件会定向过去，但 `agent-seat-probe keys/text` 走的是合成器的键盘焦点——
+   窗口在自己桌面里没聚焦时文字会打空，日志里什么也看不到。脚本里先
+   `niri msg action focus-window --id "$WIN"` 再发键（只动 agent 桌面，不影响人的桌面）。
+   同理：发命令后要**按实际节奏等落地**（~1 FPS 时一条命令要几十秒才进日志），
+   固定 `sleep 2` 会误判失败。
+
 ## 已知未测
 
 - VR/OpenXR（需要物理 GPU 会话，agent 桌面不做）。
