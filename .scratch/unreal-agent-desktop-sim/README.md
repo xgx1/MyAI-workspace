@@ -40,7 +40,18 @@
 6. **冷启动首次 `ShaderCompileWorker terminated unexpectedly, return code 0`**：setsid 之后未复现，
    疑与父进程被杀同源；真机首次跑要么先预热 DDC，要么接受首帧慢。
 
+7. **帧率只有 ~1 FPS（不是掉帧，是被节流）**：嵌套 niri 的 winit 后端在
+   `/mnt/Video2/System/repos/niri/src/backend/winit.rs` 里明确写着
+   `FIXME: this should wait until a frame callback from the host compositor, but it redraws right away instead`，
+   一次重绘约 1 秒；`stat fps` 在编辑器与打包版都显示 0.58–1.00 FPS、1000–1726 ms/帧，
+   GPU 利用率只有 3–5%（GPU 并不忙）。功能不受影响（输入、PIE、截图都对），
+   但**不能用这套环境测性能/手感**，要看帧率必须回生产桌面（`AGENT_DESKTOP=0`）。
+8. **UE 同项目单实例**：已有同 uproject 的编辑器在跑时，新进程只打印
+   `Existing instance is the same age or newer` 就退出，窗口不会出现——脚本里先检测再跑，
+   否则会把输入打进屋主的旧实例、日志却写进新文件（实测踩过，误判成"输入没生效"）。
+
 ## 已知未测
 
 - VR/OpenXR（需要物理 GPU 会话，agent 桌面不做）。
 - 菜单操作、蓝图编辑器、资产导入等更复杂的 UI 路径，只测了控制台 + PIE + 视口。
+- 打包版启动脚本的相对路径坑（第 5 条）只是绕过、没修产物。
