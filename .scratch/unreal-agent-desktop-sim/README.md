@@ -40,22 +40,32 @@
 6. **冷启动首次 `ShaderCompileWorker terminated unexpectedly, return code 0`**：setsid 之后未复现，
    疑与父进程被杀同源；真机首次跑要么先预热 DDC，要么接受首帧慢。
 
-7. **帧率只有 ~1 FPS（不是掉帧，是被节流）**：嵌套 niri 的 winit 后端在
-   `/mnt/Video2/System/repos/niri/src/backend/winit.rs` 里明确写着
-   `FIXME: this should wait until a frame callback from the host compositor, but it redraws right away instead`，
-   一次重绘约 1 秒；`stat fps` 在编辑器与打包版都显示 0.58–1.00 FPS、1000–1726 ms/帧，
-   GPU 利用率只有 3–5%（GPU 并不忙）。功能不受影响（输入、PIE、截图都对），
-   但**不能用这套环境测性能/手感**，要看帧率必须回生产桌面（`AGENT_DESKTOP=0`）。
-8. **UE 同项目单实例**：已有同 uproject 的编辑器在跑时，新进程只打印
-   `Existing instance is the same age or newer` 就退出，窗口不会出现——脚本里先检测再跑，
-   否则会把输入打进屋主的旧实例、日志却写进新文件（实测踩过，误判成"输入没生效"）。
+7. **帧率 ~1 FPS 的根因是「嵌套窗口不在父合成器的活动工作区」，不是 niri 的 winit 后端本身**：
+   父合成器只给真正被 present 的表面发 `wl_surface.frame`；窗口被藏在非活动工作区时一个回调都不来，
+   winit 于是不派发 `RedrawRequested`，客户端掉到 niri 的 1 秒兜底节流
+   （`src/niri.rs` 的 `FRAME_CALLBACK_THROTTLE = 995ms`）。同一个 UE 进程实测：
+   窗口在非活动工作区 `0.01 FPS / 157914 ms`，移到活动工作区立刻 `60.00 FPS / 16.67 ms`。
+   **要测性能/手感就把嵌套窗口挪到活动工作区**（`--focus false` 不动人的焦点）：
 
-9. **键盘按「焦点」投递，不按 scoped pin 投递**（与鼠标相反）：`scoped-target` 钉住窗口后
-   鼠标事件会定向过去，但 `agent-seat-probe keys/text` 走的是合成器的键盘焦点——
-   窗口在自己桌面里没聚焦时文字会打空，日志里什么也看不到。脚本里先
-   `niri msg action focus-window --id "$WIN"` 再发键（只动 agent 桌面，不影响人的桌面）。
-   同理：发命令后要**按实际节奏等落地**（~1 FPS 时一条命令要几十秒才进日志），
-   固定 `sleep 2` 会误判失败。
+   ```bash
+   NIRI_SOCKET=/run/user/1000/niri.wayland-1.<prod-pid>.sock niri \
+     msg action move-window-to-workspace --window-id <desk.json 的 parent_window> --focus false home
+   ```
+
+   测完挪回 `ue`。不能挪（不想让人看见）时只能接受 ~1 FPS，别指望改 winit：
+   `request_redraw` 改成无条件、以及给 winit 加 16 ms 自驱动定时器**两条都试过**，
+   隐藏场景仍只有 0.03–0.18 FPS——niri 自己不 render 就不发帧回调，客户端照样在等。
+8. **「UE 同项目单实例」是误判**：双开实测正常，两个编辑器窗口都在。报
+   `Existing instance is the same age or newer` 的是 **UnrealTraceServer**
+   （`Engine/Source/Programs/UnrealTraceServer/src/Main.cpp`），不是编辑器。
+
+9. **键盘是按 scoped pin 投递的，不是按焦点**（和鼠标一致）：`scoped-target <win>` 之后
+   `agent-seat-probe agent-0 text/keys` 就进那个窗口，即使桌面焦点在别的窗口——
+   实测把焦点放在另一个 UnrealGame、pin 住编辑器，编辑器照样收到 `Cmd: stat unit`。
+   之前「按焦点投递」的结论是**假的**：那时嵌套窗口是隐藏的，整套渲染和输入都卡在 1 FPS，
+   命令几十秒才落地，看起来像丢了。`niri msg action focus-window` 现在只是保险，不是必需。
+   注意：窗口隐藏时不只是慢——`wl_keyboard.key` 其实已经送达客户端（WAYLAND_DEBUG 可见），
+   是客户端拿到帧的节奏太差导致处理/回显延迟，别据此判断「投递失败」。
 
 ## 已知未测
 

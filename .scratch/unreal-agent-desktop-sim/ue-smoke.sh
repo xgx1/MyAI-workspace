@@ -48,7 +48,8 @@ grep -q 'Engine is initialized' "$OUT/ue-smoke.log" || { echo "引擎没初始�
 sleep 5
 echo "engine ready"
 
-# 键盘按合成器的焦点走，不是按 scoped pin 走：先把窗口在自己桌面里聚焦（只动 agent 桌面）。
+# 键盘走 scoped pin（和鼠标一致）；这里补一次聚焦只是保险——隐藏窗口时渲染卡在 1 秒节流，
+# 会让人误以为输入丢了（见 README 第 7、9 条）。只动 agent 桌面，不影响人的桌面。
 niri msg action focus-window --id "$WIN" >/dev/null 2>&1 || true
 
 # 坐标一律千分数（probe 按钉住表面的比例映射），不是像素。
@@ -58,7 +59,7 @@ scoped-shot "$WIN" "$OUT/smoke-01-editor.png"
 agent-seat-probe agent-0 click 500 983 >/dev/null   # 底部控制台输入框
 agent-seat-probe agent-0 text 'stat fps' >/dev/null
 agent-seat-probe agent-0 keys enter >/dev/null
-# 输入落地很慢（winit 后端 ~1 FPS，见 README 第 7 条）：最多等 60 秒再判失败。
+# 嵌套窗口不在父合成器活动工作区时只有 ~1 FPS（README 第 7 条），命令落地会很慢：最多等 60 秒。
 for _ in $(seq 1 30); do
   grep -q 'Cmd: stat fps' "$OUT/ue-smoke.log" 2>/dev/null && break
   sleep 2
