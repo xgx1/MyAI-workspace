@@ -55,12 +55,19 @@ scoped-shot "$WIN" "$OUT/smoke-01-editor.png"
 agent-seat-probe agent-0 click 500 983 >/dev/null   # 底部控制台输入框
 agent-seat-probe agent-0 text 'stat fps' >/dev/null
 agent-seat-probe agent-0 keys enter >/dev/null
-grep -q 'Cmd: stat fps' "$OUT/ue-smoke.log" || { sleep 5; grep -q 'Cmd: stat fps' "$OUT/ue-smoke.log"; } \
-  || { echo "控制台命令没进日志"; exit 1; }
+# 输入落地很慢（winit 后端 ~1 FPS，见 README 第 7 条）：最多等 60 秒再判失败。
+for _ in $(seq 1 30); do
+  grep -q 'Cmd: stat fps' "$OUT/ue-smoke.log" 2>/dev/null && break
+  sleep 2
+done
+grep -q 'Cmd: stat fps' "$OUT/ue-smoke.log" || { echo "控制台命令没进日志"; exit 1; }
 scoped-shot "$WIN" "$OUT/smoke-02-fps.png"
 
 agent-seat-probe agent-0 click 587 59 >/dev/null     # Play
-sleep 15
+for _ in $(seq 1 30); do
+  grep -q 'PIE总开始时间' "$OUT/ue-smoke.log" 2>/dev/null && break
+  sleep 2
+done
 grep -q 'PIE总开始时间' "$OUT/ue-smoke.log" || { echo "PIE 没起来"; exit 1; }
 scoped-shot "$WIN" "$OUT/smoke-03-pie.png"
 
