@@ -48,6 +48,9 @@ grep -q 'Engine is initialized' "$OUT/ue-smoke.log" || { echo "引擎没初始�
 sleep 5
 echo "engine ready"
 
+# 键盘按合成器的焦点走，不是按 scoped pin 走：先把窗口在自己桌面里聚焦（只动 agent 桌面）。
+niri msg action focus-window --id "$WIN" >/dev/null 2>&1 || true
+
 # 坐标一律千分数（probe 按钉住表面的比例映射），不是像素。
 scoped-target "$WIN" >/dev/null
 scoped-shot "$WIN" "$OUT/smoke-01-editor.png"
