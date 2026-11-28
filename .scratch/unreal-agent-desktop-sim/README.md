@@ -40,9 +40,14 @@
    挪到别的输出/工作区会把 tile 宽度改成 1277 或 2683，控制台输入框的纵向比例随之变化，
    点 983 就会落到状态栏上、命令进不去（2026-11-28 重启后实测踩到）。跑脚本前确认
    `niri msg windows` 里自己的编辑器窗口宽度还在 ~900 量级。
-5. **打包版 `PCGame.sh` 报 `Project file not found: ../../../PCGame/PCGame.uproject`**：
-   脚本默认相对路径指向不存在的 uproject，靠 project info helper 兜底起来。产物里没有
-   `PCGame.uproject`（BuildCookRun 没 stage 它）——要么 stage 进去，要么改 `PCGame.sh` 的默认路径。
+5. **打包版 `PCGame.sh` 报 `Project file not found: ../../../PCGame/PCGame.uproject`（已查清，不是启动器的问题）**：
+   那条相对路径**相对可执行文件目录**解析，即 `Build/Linux/Engine/Binaries/Linux/../../../PCGame/PCGame.uproject`
+   → `Build/Linux/PCGame/PCGame.uproject`，与 cwd 无关。报错的真因是那个 staged uproject 曾不见了
+   （清单 `Manifest_UFSFiles_Linux.txt:1764` 证明打包时确实 stage 过它，是后来从产物里丢的）；
+   2026-11-27 22:35 把 uproject 拷回 `Build/Linux/PCGame/` 后，从 `/tmp` 起也不再报。
+   反证：把 `Build/Linux/PCGame/PCGame.uproject` 挪走后立刻回到 `Project file not found` + `Attempting to find via project info helper`。
+   顺带修了手写启动器里的转义引号（`\"../../../PCGame/PCGame.uproject\"` 会把引号当字符传给引擎，
+   UE 自己剥掉了所以旧写法也能跑），现在与引擎模板一致：`"$UE_PROJECT_ROOT/Engine/Binaries/Linux/UnrealGame" ../../../PCGame/PCGame.uproject "$@"`。
 6. **冷启动首次 `ShaderCompileWorker terminated unexpectedly, return code 0`**：setsid 之后未复现，
    疑与父进程被杀同源；真机首次跑要么先预热 DDC，要么接受首帧慢。
 
