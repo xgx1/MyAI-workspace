@@ -7,7 +7,8 @@ set -euo pipefail
 PROJECT="${1:?usage: ue-smoke.sh <uproject> [outdir]}"
 OUT="${2:-/home/sx/.dsh/tmp/ue-sim}"
 EDITOR=/home/sx/projects/unrealengine/ue6/Engine/Binaries/Linux/UnrealEditor
-PROBE=/mnt/Video2/System/repos/agent-seat-probe/target/debug
+PROBE=/home/sx/projects/MyAI/repos/agent-seat-probe/target/debug  # 含 --help 修复（c65a50e）
+[ -x "$PROBE/agent-seat-probe" ] || PROBE=/mnt/Video2/System/repos/agent-seat-probe/target/debug  # 旧构建，只够跑投递
 export PATH="$PROBE:$PATH"
 
 mkdir -p "$OUT"
@@ -45,7 +46,12 @@ for _ in $(seq 1 60); do
   sleep 2
 done
 grep -q 'Engine is initialized' "$OUT/ue-smoke.log" || { echo "引擎没初始化完"; exit 1; }
-sleep 5
+# 引擎初始化完 ≠ 能收输入：资产注册表初次扫描期间主线程卡住，这时打字会丢（2026-11-28 实测）。
+for _ in $(seq 1 45); do
+  grep -q 'Asset Registry is done with its initial scan' "$OUT/ue-smoke.log" 2>/dev/null && break
+  sleep 2
+done
+sleep 2
 echo "engine ready"
 
 # 键盘走 scoped pin（和鼠标一致）；这里补一次聚焦只是保险——隐藏窗口时渲染卡在 1 秒节流，

@@ -27,13 +27,19 @@
 1. **普通 `nohup ... &` 的 UE 会被回收**：本会话的 bash 一退出，UE 走退出路径撞
    `Assertion failed: Ptr [File:Runtime/Core/Public/Misc/LazySingleton.h] [Line: 109]` + `Signal 11`，
    窗口一个都不剩。必须 `setsid nohup bash -c '... >log 2>&1' &`（脚本里就这么写）。
-2. **`agent-seat-probe --help` 会 panic**：第一参数被当 seat 名解析（`seat "--help" not found`）。
-   不知道用法时去读源码 `/mnt/Video2/System/repos/agent-seat-probe/src/main.rs`。
-3. **`repos/agent-seat-probe` 里编译不过**：`Cargo.toml` 依赖 `../niri/niri-ipc`，而
-   `repos/niri` 是上游 main（无 `ScopedTarget`/`ScopedScreenshot`）。要用预编译产物
-   `/mnt/Video2/System/repos/agent-seat-probe/target/debug/`（配 `/mnt/Video2/.../niri` 的 fork）。
-4. **`-ResX/-ResY` 不生效**：niri 把窗口铺满 tile（900x1338），请求的 1280x720 被忽略。
-   截图按实际 tile 比例看，别按请求分辨率算坐标。
+2. **`--help` 已修，但只修在 `repos/agent-seat-probe` 那份构建**（c65a50e）：
+   `/home/sx/projects/MyAI/repos/agent-seat-probe/target/debug/agent-seat-probe --help` 打印用法；
+   `/mnt/Video2/System/repos/agent-seat-probe/target/debug/` 那份是旧构建，`--help` 仍 panic
+   （`seat "--help" not found; seats = ["winit", "agent-0"]`）。脚本用前者。
+3. **`repos/agent-seat-probe` 在新机器上编译不过**：`Cargo.toml` 依赖 `../niri/niri-ipc`，而
+   `repos/niri` 是上游 main（无 `ScopedTarget`/`ScopedScreenshot`）；能编的是
+   `/mnt/Video2/System/repos/niri` 的 `scoped-input-poc` fork。已有可用的 debug 构建，
+   别为改一行 usage 去折腾依赖图。
+4. **`-ResX/-ResY` 不生效**：niri 把窗口铺满 tile，请求的 1280x720 被忽略。
+   **脚本里的千分数坐标是按标准 tile（约 900x1338）量的**：把父合成器里那个 `niri` 窗口
+   挪到别的输出/工作区会把 tile 宽度改成 1277 或 2683，控制台输入框的纵向比例随之变化，
+   点 983 就会落到状态栏上、命令进不去（2026-11-28 重启后实测踩到）。跑脚本前确认
+   `niri msg windows` 里自己的编辑器窗口宽度还在 ~900 量级。
 5. **打包版 `PCGame.sh` 报 `Project file not found: ../../../PCGame/PCGame.uproject`**：
    脚本默认相对路径指向不存在的 uproject，靠 project info helper 兜底起来。产物里没有
    `PCGame.uproject`（BuildCookRun 没 stage 它）——要么 stage 进去，要么改 `PCGame.sh` 的默认路径。
